@@ -1,0 +1,12 @@
+.previous-chats-sidebar {
+  flex: 0 0 20%;
+  background-color: #f4f4f4;
+  padding: 1rem;
+  overflow-y: auto;
+  border-right: 1px solid #ddd;
+}
+
+.previous-chats-sidebar h2 {
+  margin: 1rem 0;
+  font-size: 1.2rem;
+}

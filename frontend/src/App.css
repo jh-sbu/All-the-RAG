@@ -47,14 +47,6 @@
   height: 100vh;
 }
 
-.sidebar {
-  flex: 0 0 20%;
-  background-color: #f4f4f4;
-  padding: 1rem;
-  overflow-y: auto;
-  border-right: 1px solid #ddd;
-}
-
 .main-content {
   flex: 0 0 60%;
   padding: 1rem;

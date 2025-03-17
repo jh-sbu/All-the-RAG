@@ -1,19 +1,13 @@
 import React from 'react';
 import './App.css';
 import Chatbot from './Chatbot';
-import ChatCard from './ChatCard';
+import PreviousChatsSidebar from './PreviousChatsSidebar';
 import SourceCard from './SourceCard';
 
 const App: React.FC = () => {
   return (
     <div className="container">
-      <div className="sidebar">
-         <ChatCard title="New Chat" />
-         <h2>Previous Chats</h2>
-         <ChatCard title="Chat 1" />
-         <ChatCard title="Chat 2" />
-         <ChatCard title="Chat 3" />
-      </div>
+      <PreviousChatsSidebar />
       <div className="main-content">
          <Chatbot />
       </div>
