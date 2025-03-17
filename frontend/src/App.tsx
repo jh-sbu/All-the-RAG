@@ -3,6 +3,7 @@ import './App.css';
 import Chatbot from './Chatbot';
 import PreviousChatsSidebar from './PreviousChatsSidebar';
 import SourcesSidebar from './SourcesSidebar';
+import { IChatSession } from './Models/ChatSession';
 
 const App: React.FC = () => {
   const sources = [
@@ -20,9 +21,20 @@ const App: React.FC = () => {
     }
   ];
 
+  const chats: IChatSession[] = [
+    {
+      chat_title: "Chat 1",
+      messages: []
+    },
+    {
+      chat_title: "Chat 2",
+      messages: []
+    }
+  ];
+
   return (
     <div className="container">
-      <PreviousChatsSidebar />
+      <PreviousChatsSidebar chats={chats} />
       <div className="main-content">
          <Chatbot />
       </div>

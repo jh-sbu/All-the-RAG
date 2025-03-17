@@ -1,15 +1,23 @@
 import React from 'react';
 import ChatCard from './ChatCard';
 import './PreviousChatsSidebar.css';
+import { IChatSession } from './Models/ChatSession';
 
-const PreviousChatsSidebar: React.FC = () => {
+interface PreviousChatsSidebarProps {
+  chats: IChatSession[];
+}
+
+const PreviousChatsSidebar: React.FC<PreviousChatsSidebarProps> = ({ chats }) => {
   return (
     <div className="previous-chats-sidebar">
       <ChatCard title="New Chat" />
       <h2>Previous Chats</h2>
-      <ChatCard title="Chat 1" />
-      <ChatCard title="Chat 2" />
-      <ChatCard title="Chat 3" />
+      {chats.map((chat) => (
+        <ChatCard
+          key={chat.chat_title}
+          title={chat.chat_title}
+        />
+      ))}
     </div>
   );
 };
