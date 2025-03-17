@@ -1,7 +1,12 @@
 .sources-sidebar {
   flex: 0 0 20%;
-  background-color: #f4f4f4;
+  background-color: #2d2d2d;
+  color: #fff;
   padding: 1rem;
   overflow-y: auto;
-  border-left: 1px solid #ddd;
+  border-left: 1px solid #444;
+}
+
+.sources-sidebar h2 {
+  color: #fff;
 }
