@@ -1,12 +1,13 @@
 import { useState } from 'react';
+import { IMessage } from './Models/Message';
 
 function Chatbot() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<IMessage[]>([]);
   const [userInput, setUserInput] = useState('');
 
   const sendMessage = () => {
     if (!userInput.trim()) return;
-    const newMessage: Message = { sender: 'user', text: userInput };
+    const newMessage: IMessage = { sender: 'user', text: userInput };
     setMessages([...messages, newMessage]);
     setUserInput('');
     // simulate bot response
