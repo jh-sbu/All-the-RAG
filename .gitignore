@@ -1,3 +1,4 @@
 sandbox/
 .aider*
-frontend/.aider
+frontend/.aider*
+backend/.aider*
