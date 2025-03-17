@@ -1,9 +1,10 @@
-import './App.css'
-import Chatbot from './Chatbot'
-import ChatCard from './ChatCard'
-import SourceCard from './SourceCard'
+import React from 'react';
+import './App.css';
+import Chatbot from './Chatbot';
+import ChatCard from './ChatCard';
+import SourceCard from './SourceCard';
 
-function App() {
+const App: React.FC = () => {
   return (
     <div className="container">
       <div className="sidebar">
@@ -22,7 +23,7 @@ function App() {
          <SourceCard number={2} title="Source Title 2" summary="Brief summary of source 2." website="https://source2.com" />
       </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
