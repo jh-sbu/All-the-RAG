@@ -21,7 +21,14 @@ function Chatbot() {
       <h2>Chatbot</h2>
       <div
         className="chat-window"
-        style={{ border: '1px solid #ccc', padding: '10px', flex: 1, marginBottom: '10px', overflowY: 'auto' }}
+        style={{ 
+          border: '1px solid #ccc',
+          padding: '10px',
+          flex: 1,
+          marginBottom: '10px',
+          overflowY: 'auto',
+          maxHeight: '70vh' // Added max height for scrollable area
+        }}
       >
         {messages.map((msg, index) => (
           <div key={index} style={{ textAlign: msg.sender === 'bot' ? 'left' : 'right' }}>
