@@ -2,20 +2,31 @@ import React from 'react';
 import './App.css';
 import Chatbot from './Chatbot';
 import PreviousChatsSidebar from './PreviousChatsSidebar';
-import SourceCard from './SourceCard';
+import SourcesSidebar from './SourcesSidebar';
 
 const App: React.FC = () => {
+  const sources = [
+    {
+      number: 1,
+      title: "Source Title 1",
+      summary: "Brief summary of source 1.",
+      website: "https://source1.com"
+    },
+    {
+      number: 2,
+      title: "Source Title 2",
+      summary: "Brief summary of source 2.",
+      website: "https://source2.com"
+    }
+  ];
+
   return (
     <div className="container">
       <PreviousChatsSidebar />
       <div className="main-content">
          <Chatbot />
       </div>
-      <div className="sources-sidebar">
-         <h2>Sources</h2>
-         <SourceCard number={1} title="Source Title 1" summary="Brief summary of source 1." website="https://source1.com" />
-         <SourceCard number={2} title="Source Title 2" summary="Brief summary of source 2." website="https://source2.com" />
-      </div>
+      <SourcesSidebar sources={sources} />
     </div>
   );
 }

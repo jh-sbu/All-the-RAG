@@ -54,11 +54,3 @@
   flex-direction: column;
   height: 100%;
 }
-
-.sources-sidebar {
-  flex: 0 0 20%;
-  background-color: #f4f4f4;
-  padding: 1rem;
-  overflow-y: auto;
-  border-left: 1px solid #ddd;
-}
