@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import Chatbot from './Chatbot';
 import PreviousChatsSidebar from './PreviousChatsSidebar';
@@ -6,7 +6,7 @@ import SourcesSidebar from './SourcesSidebar';
 import { IChatSession } from './Models/ChatSession';
 
 const App: React.FC = () => {
-  const sources = [
+  const [sources, setSources] = useState([
     {
       number: 1,
       title: "Source Title 1",
@@ -19,9 +19,9 @@ const App: React.FC = () => {
       summary: "Brief summary of source 2.",
       website: "https://source2.com"
     }
-  ];
+  ]);
 
-  const chats: IChatSession[] = [
+  const [chats, setChats] = useState<IChatSession[]>([
     {
       chat_title: "Chat 1",
       messages: []
@@ -30,7 +30,7 @@ const App: React.FC = () => {
       chat_title: "Chat 2",
       messages: []
     }
-  ];
+  ]);
 
   return (
     <div className="container">
