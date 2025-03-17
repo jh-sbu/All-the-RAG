@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import './App.css';
-import Chatbot from './Chatbot';
-import PreviousChatsSidebar from './PreviousChatsSidebar';
-import SourcesSidebar from './SourcesSidebar';
+import Chatbot from './Components/Chatbot';
+import PreviousChatsSidebar from './Components/PreviousChatsSidebar';
+import SourcesSidebar from './Components/SourcesSidebar';
 import { IChatSession } from './Models/ChatSession';
 
 const App: React.FC = () => {
@@ -36,7 +36,7 @@ const App: React.FC = () => {
     <div className="container">
       <PreviousChatsSidebar chats={chats} />
       <div className="main-content">
-         <Chatbot />
+        <Chatbot />
       </div>
       <SourcesSidebar sources={sources} />
     </div>
