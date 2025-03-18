@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { IMessage } from '../Models/Message';
+import './Chatbot.css';
 
 function Chatbot() {
   const [messages, setMessages] = useState<IMessage[]>([]);
@@ -17,21 +18,11 @@ function Chatbot() {
   };
 
   return (
-    <div className="chatbot" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+    <div className="chatbot">
       <h2>Chatbot</h2>
-      <div
-        className="chat-window"
-        style={{
-          border: '1px solid #ccc',
-          padding: '10px',
-          flex: 1,
-          marginBottom: '10px',
-          overflowY: 'auto',
-          maxHeight: '70vh' // Added max height for scrollable area
-        }}
-      >
+      <div className="chat-window">
         {messages.map((msg, index) => (
-          <div key={index} style={{ textAlign: msg.sender === 'bot' ? 'left' : 'right' }}>
+          <div key={index} className={`message ${msg.sender}`}>
             <strong>{msg.sender}:</strong> {msg.text}
           </div>
         ))}
