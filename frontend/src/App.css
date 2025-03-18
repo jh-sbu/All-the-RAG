@@ -1,8 +1,8 @@
 #root {
-  max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  width: 100%;
 }
 
 .logo {
@@ -48,7 +48,7 @@
 }
 
 .main-content {
-  flex: 0 0 60%;
+  flex: 0 0 100%;
   padding: 1rem;
   display: flex;
   flex-direction: column;

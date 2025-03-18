@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { IMessage } from './Models/Message';
+import { IMessage } from '../Models/Message';
 
 function Chatbot() {
   const [messages, setMessages] = useState<IMessage[]>([]);
@@ -21,7 +21,7 @@ function Chatbot() {
       <h2>Chatbot</h2>
       <div
         className="chat-window"
-        style={{ 
+        style={{
           border: '1px solid #ccc',
           padding: '10px',
           flex: 1,
