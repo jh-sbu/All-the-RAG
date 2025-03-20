@@ -8,13 +8,36 @@ function Chatbot() {
 
   const sendMessage = () => {
     if (!userInput.trim()) return;
+    
+    // Add user message immediately
     const newMessage: IMessage = { sender: 'user', text: userInput };
-    setMessages([...messages, newMessage]);
+    setMessages(prev => [...prev, newMessage]);
     setUserInput('');
-    // simulate bot response
-    setTimeout(() => {
-      setMessages(prev => [...prev, { sender: 'bot', text: `You said: ${newMessage.text}` }]);
-    }, 500);
+
+    // Send to backend
+    fetch(`${import.meta.env.VITE_BACKEND_URI}/send_message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: userInput }),
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('Network response was not ok');
+      return response.json();
+    })
+    .then(data => {
+      // Add bot response from backend
+      setMessages(prev => [...prev, { sender: 'bot', text: data.response }]);
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      // Show error message to user
+      setMessages(prev => [...prev, { 
+        sender: 'bot', 
+        text: 'Sorry, there was an error processing your message' 
+      }]);
+    });
   };
 
   return (
@@ -33,6 +56,7 @@ function Chatbot() {
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
           placeholder="Type your message..."
+          onKeyPress={e => e.key === 'Enter' && sendMessage()}
         />
         <button onClick={sendMessage}>Send</button>
       </div>
