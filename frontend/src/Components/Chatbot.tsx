@@ -8,7 +8,7 @@ function Chatbot() {
 
   const sendMessage = () => {
     if (!userInput.trim()) return;
-    
+
     // Add user message immediately
     const newMessage: IMessage = { sender: 'user', text: userInput };
     setMessages(prev => [...prev, newMessage]);
@@ -22,22 +22,22 @@ function Chatbot() {
       },
       body: JSON.stringify({ message: userInput }),
     })
-    .then(response => {
-      if (!response.ok) throw new Error('Network response was not ok');
-      return response.json();
-    })
-    .then(data => {
-      // Add bot response from backend
-      setMessages(prev => [...prev, { sender: 'bot', text: data.response }]);
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      // Show error message to user
-      setMessages(prev => [...prev, { 
-        sender: 'bot', 
-        text: 'Sorry, there was an error processing your message' 
-      }]);
-    });
+      .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+      })
+      .then(data => {
+        // Add bot response from backend
+        setMessages(prev => [...prev, { sender: 'bot', text: data['response'] }]);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        // Show error message to user
+        setMessages(prev => [...prev, {
+          sender: 'bot',
+          text: 'Sorry, there was an error processing your message'
+        }]);
+      });
   };
 
   return (

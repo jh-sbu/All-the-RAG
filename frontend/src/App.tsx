@@ -4,8 +4,9 @@ import Chatbot from './Components/Chatbot';
 import PreviousChatsSidebar from './Components/PreviousChatsSidebar';
 import SourcesSidebar from './Components/SourcesSidebar';
 import { IChatSession } from './Models/ChatSession';
+import { ISource } from './Models/Source';
 
-const App: React.FC = () => {
+const App: React.FC<ISource> = () => {
   const [sources, setSources] = useState([
     {
       number: 1,
