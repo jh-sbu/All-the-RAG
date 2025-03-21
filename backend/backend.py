@@ -1,10 +1,14 @@
-from flask import Flask, json, jsonify
+from flask import Flask, jsonify
 from flask_cors import CORS
 import os
 
 app = Flask(__name__)
+
 # app.secret_key = "change_this_key"  # TODO
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
+if not app.config["SECRET_KEY"]:
+    raise ValueError("Could not initialize SECRET_KEY for flask")
+
 CORS(app)
 
 # not_implemented_error = jsonify({"error": "Not yet implemented"}), 501
