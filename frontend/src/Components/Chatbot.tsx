@@ -9,32 +9,40 @@ function Chatbot() {
   const sendMessage = () => {
     if (!userInput.trim()) return;
 
-    // Add user message immediately
+    // Create updated message array with new user message
     const newMessage: IMessage = { sender: 'user', text: userInput };
-    setMessages(prev => [...prev, newMessage]);
+    const updatedMessages = [...messages, newMessage];
+    
+    // Update state immediately
+    setMessages(updatedMessages);
     setUserInput('');
 
-    // Send to backend
+    // Send full chat history to backend
     fetch(`${import.meta.env.VITE_BACKEND_URI}/send_message`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message: userInput }),
+      body: JSON.stringify({
+        messages: updatedMessages.map(msg => ({
+          role: msg.sender, // 'user' or 'assistant'
+          content: msg.text
+        }))
+      }),
     })
       .then(response => {
         if (!response.ok) throw new Error('Network response was not ok');
         return response.json();
       })
       .then(data => {
-        // Add bot response from backend
-        setMessages(prev => [...prev, { sender: 'bot', text: data['response'] }]);
+        // Add assistant response to chat history
+        setMessages(prev => [...prev, { sender: 'assistant', text: data.response }]);
       })
       .catch(error => {
         console.error('Error:', error);
         // Show error message to user
         setMessages(prev => [...prev, {
-          sender: 'bot',
+          sender: 'assistant',
           text: 'Sorry, there was an error processing your message'
         }]);
       });
