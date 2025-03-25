@@ -1,8 +1,11 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
+from dotenv import load_dotenv
 import os
 
 app = Flask(__name__)
+
+load_dotenv()
 
 # app.secret_key = "change_this_key"  # TODO
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
