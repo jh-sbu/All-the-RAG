@@ -46,17 +46,36 @@ function Chatbot() {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const token = new TextDecoder().decode(value);
-          setMessages(prev => {
-            const lastMessage = prev[prev.length - 1];
-            if (lastMessage.sender === 'assistant') {
-              return [
-                ...prev.slice(0, -1),
-                { ...lastMessage, text: lastMessage.text + token }
-              ];
+          const chunk = new TextDecoder().decode(value);
+          // Process each data line in the chunk
+          const lines = chunk.split('\n');
+          let contentAccumulator = '';
+          
+          lines.forEach(line => {
+            if (line.startsWith('data: ')) {
+              try {
+                const json = JSON.parse(line.slice(6).trim());
+                if (json.content) {
+                  contentAccumulator += json.content;
+                }
+              } catch (e) {
+                console.error('Error parsing JSON:', e);
+              }
             }
-            return prev;
           });
+
+          if (contentAccumulator) {
+            setMessages(prev => {
+              const lastMessage = prev[prev.length - 1];
+              if (lastMessage.sender === 'assistant') {
+                return [
+                  ...prev.slice(0, -1),
+                  { ...lastMessage, text: lastMessage.text + contentAccumulator }
+                ];
+              }
+              return prev;
+            });
+          }
         }
       })
       .catch(error => {
