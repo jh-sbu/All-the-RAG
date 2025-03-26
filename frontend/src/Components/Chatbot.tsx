@@ -13,7 +13,7 @@ function Chatbot() {
     // Create updated message array with new user message
     const newUserMessage: IMessage = { sender: 'user', text: userInput };
     const updatedMessages = [...messages, newUserMessage];
-    
+
     // Update state immediately
     setMessages(updatedMessages);
     setUserInput('');
@@ -38,14 +38,14 @@ function Chatbot() {
     })
       .then(async response => {
         if (!response.ok) throw new Error('Network response was not ok');
-        
+
         const reader = response.body?.getReader();
         if (!reader) throw new Error('No response body');
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          
+
           const token = new TextDecoder().decode(value);
           setMessages(prev => {
             const lastMessage = prev[prev.length - 1];
