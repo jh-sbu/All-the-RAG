@@ -95,13 +95,6 @@ def send_message():
 
                 messages.append(new_message)
 
-            # new_message: ChatCompletionMessageParam = {
-            #     "role": "user",
-            #     "content": request.json["message"],
-            # }
-
-            # messages = [system_prompt, new_message]
-            #
             def generate():
                 response = client.chat.completions.create(
                     messages=messages,
@@ -112,31 +105,15 @@ def send_message():
                 )
 
                 for chunk in response:
-                    # if 'content' in chunk.choices[0].delta:
-                    #     content = chunk.choices[0].delta.content
-                    #
-                    #     yield f'data: {json.dumps({'content': content})}\n\n'
                     content = chunk.choices[0].delta.content
                     app.logger.info(f"Sending token {content}")
                     yield f"data: {json.dumps({'content': content})}\n\n"
 
             return Response(generate(), mimetype="text/event-stream")
 
-            # chat_completion = client.chat.completions.create(
-            #     messages=messages,
-            #     model=model,
-            #     # stream=True,
-            #     max_completion_tokens=16,
-            #     max_tokens=16,
-            # )
-            #
-            # return jsonify({"response": chat_completion.choices[0].message.content})
-
         except Exception as e:
-            # print(e)
             app.logger.error(f"Error in chat stream: {str(e)}")
             return jsonify({"error": "Error reaching chatbot"}), 500
-    return jsonify({"response": "Chat bot is not currently running"}), 200
 
 
 @app.route("/example_page", methods=["GET"])
