@@ -3,7 +3,7 @@ import abc
 
 class Provider(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def request(self, request_text: str) -> None:
+    def request(self, messages: list[str]) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod

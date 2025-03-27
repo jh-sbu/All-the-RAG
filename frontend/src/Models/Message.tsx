@@ -1,4 +1,4 @@
 export interface IMessage {
-  sender: 'user' | 'bot';
+  sender: 'user' | 'assistant';
   text: string;
 }

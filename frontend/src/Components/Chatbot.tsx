@@ -50,7 +50,7 @@ function Chatbot() {
           // Process each data line in the chunk
           const lines = chunk.split('\n');
           let contentAccumulator = '';
-          
+
           lines.forEach(line => {
             if (line.startsWith('data: ')) {
               try {
@@ -96,7 +96,7 @@ function Chatbot() {
 
   return (
     <div className="chatbot">
-      <h2>Chatbot</h2>
+      <h2>All the RAG</h2>
       <div className="chat-window">
         {messages.map((msg, index) => (
           <div key={index} className={`message ${msg.sender}`}>
