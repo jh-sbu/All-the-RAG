@@ -1,51 +1,32 @@
-from flask import Flask, Response, json, jsonify, request
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
-from typing import Iterable, cast
 
-import openai
-from openai.types.chat import ChatCompletionMessageParam
-from werkzeug.wrappers import response
+from providers.openrouter import OpenRouter
+from providers.llama_server import Llama
 
 app = Flask(__name__)
 
 load_dotenv()
 
-# app.secret_key = "change_this_key"  # TODO
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 if not app.config["SECRET_KEY"]:
     raise ValueError("Could not initialize SECRET_KEY for flask")
 
-api_key = os.environ.get("API_KEY", "fake_key")
-app.config["api_key"] = api_key
-
 CORS(app)
 
-base_url = os.environ.get("BASE_URL")
-if not base_url:
-    raise ValueError("Could not find the url of the LLM server")
+system_prompt = "You are a helpful assistant that assists users with the video game Minecraft. Respond to the user's query."
 
-model_name = os.environ.get("MODEL")
-
-if model_name is not None:
-    model = model_name
+completion_provider = os.environ.get("COMPLETION_PROVIDER")
+if completion_provider is None:
+    raise ValueError("Could not find completion provider configuration")
+elif completion_provider == "Local":
+    provider = Llama(system_prompt=system_prompt)
+elif completion_provider == "OpenRouter":
+    provider = OpenRouter(system_prompt=system_prompt)
 else:
-    raise ValueError("Could not find the name of the model")
-
-
-system_prompt: ChatCompletionMessageParam = {
-    "role": "assistant",
-    "content": "You are a helpful assistant that assists users with the video game Minecraft. Respond to the user's query.",
-}
-
-# model = os.environ.get("MODEL")
-# if not model:
-#     raise ValueError("Could not find the name of the model")
-
-client = openai.OpenAI(api_key=api_key, base_url=base_url)
-
-# not_implemented_error = jsonify({"error": "Not yet implemented"}), 501
+    raise ValueError("Specified completion provider is not supported")
 
 
 @app.route("/register", methods=["POST"])
@@ -74,7 +55,6 @@ def get_chat_history():
 
 @app.route("/send_message", methods=["POST"])
 def send_message():
-    # return jsonify({"error": "Not yet implemented"}), 405
     data = request.get_json()
 
     if data is None or "messages" not in data.keys():
@@ -82,34 +62,36 @@ def send_message():
 
     else:
         try:
-            messages: Iterable[ChatCompletionMessageParam] = []
+            return provider.request(data["messages"])
 
-            messages.append(system_prompt)
-
-            for message in data["messages"]:
-                # app.logger.info(f"Received message: {message}")
-                new_message: ChatCompletionMessageParam = {
-                    "role": message["role"],
-                    "content": message["content"],
-                }
-
-                messages.append(new_message)
-
-            def generate():
-                response = client.chat.completions.create(
-                    messages=messages,
-                    model=model,
-                    stream=True,
-                    max_completion_tokens=16,
-                    max_tokens=16,
-                )
-
-                for chunk in response:
-                    content = chunk.choices[0].delta.content
-                    app.logger.info(f"Sending token {content}")
-                    yield f"data: {json.dumps({'content': content})}\n\n"
-
-            return Response(generate(), mimetype="text/event-stream")
+            # messages: Iterable[ChatCompletionMessageParam] = []
+            #
+            # messages.append(system_prompt)
+            #
+            # for message in data["messages"]:
+            #     # app.logger.info(f"Received message: {message}")
+            #     new_message: ChatCompletionMessageParam = {
+            #         "role": message["role"],
+            #         "content": message["content"],
+            #     }
+            #
+            #     messages.append(new_message)
+            #
+            # def generate():
+            #     response = client.chat.completions.create(
+            #         messages=messages,
+            #         model=model,
+            #         stream=True,
+            #         max_completion_tokens=16,
+            #         max_tokens=16,
+            #     )
+            #
+            #     for chunk in response:
+            #         content = chunk.choices[0].delta.content
+            #         app.logger.info(f"Sending token {content}")
+            #         yield f"data: {json.dumps({'content': content})}\n\n"
+            #
+            # return Response(generate(), mimetype="text/event-stream")
 
         except Exception as e:
             app.logger.error(f"Error in chat stream: {str(e)}")

@@ -2,15 +2,16 @@ import os
 from typing import Iterable
 from dotenv import load_dotenv
 from flask import Response, json
-from openai.types.chat import ChatCompletionMessageParam
-from providers.provider import Provider
 import openai
+from openai.types.chat import ChatCompletionMessageParam
+
+from providers.provider import Provider
 
 
 def get_model_name():
     model_name = os.environ.get("MODEL")
     if model_name is None:
-        raise ValueError("Could not find the name of the model for local inference")
+        raise ValueError("Could not find the name of the model for OpenRouter")
 
     return model_name
 
@@ -18,13 +19,17 @@ def get_model_name():
 def get_client() -> openai.OpenAI:
     base_url = os.environ.get("BASE_URL")
     if base_url is None:
-        raise ValueError("Could not find the base url for local inference")
+        raise ValueError("Could not find the base url for OpenRouter")
+
+    api_key = os.environ.get("API_KEY")
+    if api_key is None:
+        raise ValueError("Could not read API key for OpenRouter")
 
     # Don't need an api key for local inference
-    return openai.OpenAI(api_key="FAKE_KEY", base_url=base_url)
+    return openai.OpenAI(api_key=api_key, base_url=base_url)
 
 
-class Llama(Provider):
+class OpenRouter(Provider):
     def __init__(
         self,
         system_prompt: str = "You are a helpful assistant, who helps users with problems related to the game Minecraft",
