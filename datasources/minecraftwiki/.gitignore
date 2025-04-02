@@ -1,0 +1,4 @@
+output_files/
+minecraftwiki/__pycache__/
+minecraftwiki/__init__.py
+minecraftwiki/spiders/__pycache__/
