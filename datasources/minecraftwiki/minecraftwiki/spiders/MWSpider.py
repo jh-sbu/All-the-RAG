@@ -36,4 +36,4 @@ class MWSpider(SitemapSpider):
 
         print(f"Title: {title}")
 
-        yield {"title": title}
+        yield {"body": response.body}
