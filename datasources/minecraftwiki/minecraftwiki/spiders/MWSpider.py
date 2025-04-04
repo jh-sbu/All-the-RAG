@@ -15,11 +15,13 @@ class MWSpider(SitemapSpider):
         super().__init__(*a, **kw)
         self.max_urls = 1
 
+    # For testing only do one
     def start_requests(self) -> Iterable[Request]:
         requests = list(super(MWSpider, self).start_requests())
 
         return [requests[0]]
 
+    # Testing again
     def sitemap_filter(
         self, entries: Iterable[dict[str, Any]]
     ) -> Iterable[dict[str, Any]]:
