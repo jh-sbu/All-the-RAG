@@ -70,7 +70,7 @@ class OpenRouter(Provider):
                 model=self.model,
                 stream=True,
                 max_completion_tokens=16,
-                max_tokens=16,
+                max_tokens=256,
             )
 
             for chunk in response:
