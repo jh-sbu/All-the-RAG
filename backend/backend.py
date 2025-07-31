@@ -3,6 +3,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 
+from vdb.faiss import FaissIndex
 from providers.openrouter import OpenRouter
 from providers.llama_server import Llama
 
@@ -15,6 +16,8 @@ if not app.config["SECRET_KEY"]:
     raise ValueError("Could not initialize SECRET_KEY for flask")
 
 CORS(app)
+
+example_faiss = FaissIndex()
 
 system_prompt = "You are a helpful assistant that assists users with the video game Minecraft. Respond to the user's query."
 
