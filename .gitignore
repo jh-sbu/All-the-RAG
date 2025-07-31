@@ -2,3 +2,4 @@ sandbox/
 .aider*
 frontend/.aider*
 backend/.aider*
+datasources/github_repos/
