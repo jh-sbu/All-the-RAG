@@ -19,7 +19,8 @@ class FaissIndex(VDB):
 
         contexts = []
 
-        example_path = "./example_sources/"
+        # example_path = os.getcwd() + "/vdb/example_sources/"
+        example_path = "./vdb/example_sources"
 
         for filename in os.listdir(example_path):
             file_path = os.path.join(example_path, filename)
