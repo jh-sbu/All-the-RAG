@@ -3,9 +3,9 @@ import abc
 
 class VDB(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def get_nearest(self, k: int):
+    def get_nearest(self, k: int, query: str):
         """
-        Get the k nearest matches stored in the vector DB
+        Get the k nearest matches for query stored in the vector DB
         """
         raise NotImplementedError
 

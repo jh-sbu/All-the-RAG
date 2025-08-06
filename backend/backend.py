@@ -18,6 +18,7 @@ if not app.config["SECRET_KEY"]:
 CORS(app)
 
 example_faiss = FaissIndex()
+example_faiss.get_nearest(3, "What is a woodchuck in minecraft?")
 
 system_prompt = "You are a helpful assistant that assists users with the video game Minecraft. Respond to the user's query."
 
