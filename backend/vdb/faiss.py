@@ -26,20 +26,20 @@ class FaissIndex(VDB):
         d = embeddings_np.shape[1]
         self.index = faiss.IndexFlatL2(d)
         self.index.add(embeddings_np)
+        self.contexts = contexts
 
     def get_nearest(self, k: int, query: str):
         new_embedding = self.model.encode(query)
         new_embedding = new_embedding.reshape((1, new_embedding.shape[0]))
-        print(f"Shape: {new_embedding.shape}")
 
-        print(f"Index total: {self.index.ntotal}")
+        dists, indices = self.index.search(new_embedding, k)
 
-        dists = self.index.search(new_embedding, k)
+        results = []
+        for index in indices[0]:
+            # print(self.contexts[index])
+            results.append(self.contexts[index])
 
-        print(f"Dists: {dists}")
-        print(f"Indices: {np.indices}")
-
-        raise NotImplementedError
+        return results
 
     def index_document(self):
         raise NotImplementedError
