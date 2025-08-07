@@ -23,7 +23,7 @@ example_faiss.get_nearest(3, "What is a woodchuck in minecraft?")
 
 print(example_faiss.index)
 
-example_faiss.save_faiss("example_faiss.faiss")
+example_faiss.save_faiss("sandbox/example_faiss.faiss")
 
 # faiss.write_index(example_faiss.model, "example_index.faiss")
 

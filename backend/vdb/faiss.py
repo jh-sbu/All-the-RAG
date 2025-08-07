@@ -36,6 +36,7 @@ class FaissIndex(VDB):
         _, indices = self.index.search(new_embedding, k)
 
         results = []
+        print(indices)
         for index in indices[0]:
             # print(self.contexts[index])
             results.append(self.contexts[index])
