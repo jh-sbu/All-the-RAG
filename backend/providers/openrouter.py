@@ -76,8 +76,8 @@ class OpenRouter(Provider):
                 messages=chat_messages,
                 model=self.model,
                 stream=True,
-                max_completion_tokens=16,
-                max_tokens=256,
+                max_completion_tokens=1024,
+                max_tokens=1024,
             )
 
             for chunk in response:

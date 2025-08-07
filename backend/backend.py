@@ -1,18 +1,36 @@
-import faiss
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
-
-from numpy import full
-
 from vdb.faiss import FaissIndex
 from providers.openrouter import OpenRouter
 from providers.llama_server import Llama
+import logging
 
 app = Flask(__name__)
 
 load_dotenv()
+
+log_level = os.environ.get("LOG_LEVEL")
+if not log_level:
+    log_level = logging.INFO
+else:
+    if log_level == "debug":
+        log_level = logging.DEBUG
+    elif log_level == "info":
+        log_level = logging.INFO
+    elif log_level == "warn":
+        log_level = logging.WARNING
+    elif log_level == "error":
+        log_level = logging.ERROR
+    elif log_level == "critical":
+        log_level = logging.CRITICAL
+    else:
+        log_level = logging.INFO
+
+logging.basicConfig(
+    level=log_level, format="[%(asctime)s] [%(levelname)-8s] [%(name)s]: %(message)s"
+)
 
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 if not app.config["SECRET_KEY"]:
@@ -20,16 +38,16 @@ if not app.config["SECRET_KEY"]:
 
 CORS(app)
 
-example_faiss = FaissIndex()
+example_faiss = FaissIndex("sandbox/example_faiss.faiss")
 example_faiss.get_nearest(3, "What is a woodchuck in minecraft?")
 
-print(example_faiss.index)
+# print(example_faiss.index)
 
-example_faiss.save_faiss("sandbox/example_faiss.faiss")
+# example_faiss.save_faiss("sandbox/example_faiss.faiss")
 
 # faiss.write_index(example_faiss.model, "example_index.faiss")
 
-system_prompt = "You are a helpful assistant that assists users with the video game Minecraft. Read the provided context and use it to respond to the user's query."
+system_prompt = "You are a helpful assistant that assists users with the All the Mods modpacks for the video game Minecraft. Read the provided context and use it to respond to the user's query. Be concise - your job is to find the relevant information in the given context, not repeat everything you see word for word."
 
 completion_provider = os.environ.get("COMPLETION_PROVIDER")
 if completion_provider is None:
@@ -74,17 +92,13 @@ def send_message():
         return jsonify({"error": "No user prompt received"}), 400
 
     else:
-        print(type(data))
-        print(type(data["messages"]))
-        print(len(data["messages"]))
-        print(type(data["messages"][0]))
-        print(type(data["messages"][0]["content"]))
         try:
+            # TODO fix this kludge - why is the model failing to encode if
+            # I don't do this?
             full_message = " ".join(
                 [message["content"] for message in data["messages"]]
             )
             contexts = example_faiss.get_nearest(3, full_message)
-            print("Gets here")
             return provider.request(contexts, data["messages"])
 
         except Exception as e:

@@ -1,3 +1,5 @@
+from datetime import datetime
+import logging
 from vdb.vdb import VDB
 import faiss
 import os
@@ -8,8 +10,20 @@ import numpy as np
 
 
 class FaissIndex(VDB):
-    def __init__(self, index_filename: str = "faiss_index.faiss") -> None:
+    def __init__(self, index_filename: str = "../sandbox/example_faiss.faiss") -> None:
+        load_logger = logging.getLogger(__name__)
+
+        load_model_start = datetime.now()
+
         self.model = SentenceTransformer("all-MiniLM-L6-v2")
+
+        load_model_end = datetime.now()
+
+        load_logger.info(f"Loaded model in {load_model_end - load_model_start}")
+
+        # print("Getting contexts")
+        load_logger.debug("Getting contexts")
+        context_start = datetime.now()
 
         contexts = []
 
@@ -21,16 +35,27 @@ class FaissIndex(VDB):
                 with open(file_path) as f:
                     contexts.append(f.read())
 
-        embeddings = self.model.encode(contexts)
-        embeddings_np = np.array(embeddings).astype("float32")
-        d = embeddings_np.shape[1]
-        self.index = faiss.IndexFlatL2(d)
-        self.index.add(embeddings_np)
         self.contexts = contexts
+
+        context_end = datetime.now()
+
+        load_logger.debug(f"Loaded contexts in {context_end - context_start}")
+
+        try:
+            self.index = self.load_index(index_filename)
+            # print("faiss DB successfully loaded")
+            load_logger.info("faiss DB successfully loaded")
+        except Exception as _:
+            # print("Could not read faiss DB, creating a new one")
+            load_logger.info("Could not read faiss DB, creating a new one")
+            embeddings = self.model.encode(contexts)
+            embeddings_np = np.array(embeddings).astype("float32")
+            d = embeddings_np.shape[1]
+            self.index = faiss.IndexFlatL2(d)
+            self.index.add(embeddings_np)
 
     def get_nearest(self, k: int, query: str):
         new_embedding = self.model.encode([query])
-        print(new_embedding.shape)
         new_embedding = new_embedding.reshape((1, new_embedding.shape[1]))
 
         _, indices = self.index.search(new_embedding, k)
@@ -38,7 +63,6 @@ class FaissIndex(VDB):
         results = []
         print(indices)
         for index in indices[0]:
-            # print(self.contexts[index])
             results.append(self.contexts[index])
 
         return results
@@ -50,5 +74,5 @@ class FaissIndex(VDB):
         print(f"Saving index {self.index}")
         faiss.write_index(self.index, filename)
 
-    def load_index(self):
-        raise NotImplementedError
+    def load_index(self, filename: str):
+        return faiss.read_index(filename)
