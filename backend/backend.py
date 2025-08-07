@@ -4,6 +4,8 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 
+from numpy import full
+
 from vdb.faiss import FaissIndex
 from providers.openrouter import OpenRouter
 from providers.llama_server import Llama
@@ -72,8 +74,16 @@ def send_message():
         return jsonify({"error": "No user prompt received"}), 400
 
     else:
+        print(type(data))
+        print(type(data["messages"]))
+        print(len(data["messages"]))
+        print(type(data["messages"][0]))
+        print(type(data["messages"][0]["content"]))
         try:
-            contexts = example_faiss.get_nearest(3, data["messages"])
+            full_message = " ".join(
+                [message["content"] for message in data["messages"]]
+            )
+            contexts = example_faiss.get_nearest(3, full_message)
             print("Gets here")
             return provider.request(contexts, data["messages"])
 
