@@ -29,10 +29,11 @@ class FaissIndex(VDB):
         self.contexts = contexts
 
     def get_nearest(self, k: int, query: str):
-        new_embedding = self.model.encode(query)
-        new_embedding = new_embedding.reshape((1, new_embedding.shape[0]))
+        new_embedding = self.model.encode([query])
+        print(new_embedding.shape)
+        new_embedding = new_embedding.reshape((1, new_embedding.shape[1]))
 
-        dists, indices = self.index.search(new_embedding, k)
+        _, indices = self.index.search(new_embedding, k)
 
         results = []
         for index in indices[0]:

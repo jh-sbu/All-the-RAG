@@ -5,7 +5,7 @@ from flask import Response
 
 class Provider(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def request(self, messages: list[dict[str, str]]) -> Response:
+    def request(self, contexts: list[str], messages: list[dict[str, str]]) -> Response:
         raise NotImplementedError
 
     @abc.abstractmethod

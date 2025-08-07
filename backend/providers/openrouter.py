@@ -44,10 +44,17 @@ class OpenRouter(Provider):
 
         self.model = get_model_name()
 
-    def request(self, messages: list[dict[str, str]]) -> Response:
+    def request(self, contexts: list[str], messages: list[dict[str, str]]) -> Response:
         chat_messages: Iterable[ChatCompletionMessageParam] = []
 
         chat_messages.append(self._system_prompt)
+
+        for context in contexts:
+            new_message: ChatCompletionMessageParam = {
+                "role": "user",
+                "content": "Context: " + context,
+            }
+            chat_messages.append(new_message)
 
         for message in messages:
             # LSP wants to ensure a literal is used here

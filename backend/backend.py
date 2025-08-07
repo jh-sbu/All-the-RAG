@@ -1,3 +1,4 @@
+import faiss
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -20,7 +21,9 @@ CORS(app)
 example_faiss = FaissIndex()
 example_faiss.get_nearest(3, "What is a woodchuck in minecraft?")
 
-system_prompt = "You are a helpful assistant that assists users with the video game Minecraft. Respond to the user's query."
+faiss.write_index(example_faiss, "example_index.faiss")
+
+system_prompt = "You are a helpful assistant that assists users with the video game Minecraft. Read the provided context and use it to respond to the user's query."
 
 completion_provider = os.environ.get("COMPLETION_PROVIDER")
 if completion_provider is None:
@@ -66,36 +69,9 @@ def send_message():
 
     else:
         try:
-            return provider.request(data["messages"])
-
-            # messages: Iterable[ChatCompletionMessageParam] = []
-            #
-            # messages.append(system_prompt)
-            #
-            # for message in data["messages"]:
-            #     # app.logger.info(f"Received message: {message}")
-            #     new_message: ChatCompletionMessageParam = {
-            #         "role": message["role"],
-            #         "content": message["content"],
-            #     }
-            #
-            #     messages.append(new_message)
-            #
-            # def generate():
-            #     response = client.chat.completions.create(
-            #         messages=messages,
-            #         model=model,
-            #         stream=True,
-            #         max_completion_tokens=16,
-            #         max_tokens=16,
-            #     )
-            #
-            #     for chunk in response:
-            #         content = chunk.choices[0].delta.content
-            #         app.logger.info(f"Sending token {content}")
-            #         yield f"data: {json.dumps({'content': content})}\n\n"
-            #
-            # return Response(generate(), mimetype="text/event-stream")
+            contexts = example_faiss.get_nearest(3, data["messages"])
+            print("Gets here")
+            return provider.request(contexts, data["messages"])
 
         except Exception as e:
             app.logger.error(f"Error in chat stream: {str(e)}")
