@@ -44,3 +44,10 @@ class FaissIndex(VDB):
 
     def index_document(self):
         raise NotImplementedError
+
+    def save_faiss(self, filename: str):
+        print(f"Saving index {self.index}")
+        faiss.write_index(self.index, filename)
+
+    def load_index(self):
+        raise NotImplementedError

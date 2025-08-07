@@ -21,7 +21,11 @@ CORS(app)
 example_faiss = FaissIndex()
 example_faiss.get_nearest(3, "What is a woodchuck in minecraft?")
 
-faiss.write_index(example_faiss, "example_index.faiss")
+print(example_faiss.index)
+
+example_faiss.save_faiss("example_faiss.faiss")
+
+# faiss.write_index(example_faiss.model, "example_index.faiss")
 
 system_prompt = "You are a helpful assistant that assists users with the video game Minecraft. Read the provided context and use it to respond to the user's query."
 
