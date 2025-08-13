@@ -110,5 +110,6 @@ def get_example():
     return jsonify({"key": "value"}), 200
 
 
+print(__name__)
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()

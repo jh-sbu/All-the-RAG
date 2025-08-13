@@ -10,4 +10,4 @@ COPY providers/ ./providers/
 COPY vdb/ ./vdb/
 COPY backend.py .
 
-CMD [ "flask", "--app", "backend.py", "run"]
+CMD [ "flask", "--app", "backend.py", "run", "--debug", "--host=0.0.0.0"]
