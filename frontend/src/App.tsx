@@ -4,10 +4,9 @@ import Chatbot from './Components/Chatbot';
 import PreviousChatsSidebar from './Components/PreviousChatsSidebar';
 import SourcesSidebar from './Components/SourcesSidebar';
 import { IChatSession } from './Models/ChatSession';
-import { ISource } from './Models/Source';
 
-const App: React.FC<ISource> = () => {
-  const [sources, setSources] = useState([
+const App: React.FC = () => {
+  const [sources, _setSources] = useState([
     {
       number: 1,
       title: "Source Title 1",
@@ -22,7 +21,7 @@ const App: React.FC<ISource> = () => {
     }
   ]);
 
-  const [chats, setChats] = useState<IChatSession[]>([
+  const [chats, _setChats] = useState<IChatSession[]>([
     {
       chat_title: "Chat 1",
       messages: []

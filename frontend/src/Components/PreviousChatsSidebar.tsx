@@ -1,7 +1,7 @@
 import React from 'react';
 import ChatCard from './ChatCard';
 import './PreviousChatsSidebar.css';
-import { IChatSession } from './Models/ChatSession';
+import { IChatSession } from '../Models/ChatSession';
 
 interface PreviousChatsSidebarProps {
   chats: IChatSession[];
