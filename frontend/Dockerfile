@@ -6,4 +6,4 @@ COPY . .
 RUN npm run build
 
 FROM nginx:latest as serve
-COPY 
+COPY nginx.conf /etc/nginx/
