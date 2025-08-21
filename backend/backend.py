@@ -40,12 +40,6 @@ CORS(app)
 example_faiss = FaissIndex("sandbox/example_faiss.faiss")
 example_faiss.get_nearest(3, "What is a woodchuck in minecraft?")
 
-# print(example_faiss.index)
-
-# example_faiss.save_faiss("sandbox/example_faiss.faiss")
-
-# faiss.write_index(example_faiss.model, "example_index.faiss")
-
 system_prompt = "You are a helpful assistant that assists users with the All the Mods modpacks for the video game Minecraft. Read the provided context and use it to respond to the user's query. Be concise - your job is to find the relevant information in the given context, not repeat everything you see word for word."
 
 completion_provider = os.environ.get("COMPLETION_PROVIDER")

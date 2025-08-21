@@ -21,7 +21,6 @@ class FaissIndex(VDB):
 
         load_logger.info(f"Loaded model in {load_model_end - load_model_start}")
 
-        # print("Getting contexts")
         load_logger.debug("Getting contexts")
         context_start = datetime.now()
 
