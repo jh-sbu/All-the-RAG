@@ -1,4 +1,4 @@
-FROM python:latest AS builder
+FROM public.ecr.aws/lambda/python:3.12 AS builder
 
 RUN --mount=type=cache,target=/root/.cache/pip pip install sentence-transformers huggingface_hub
 
@@ -12,7 +12,8 @@ RUN hf download "$MODEL_ID" --revision "$REVISION"
 
 RUN ls -al $HF_HOME
 
-FROM python:latest AS base
+# FROM python:latest AS base
+FROM public.ecr.aws/lambda/python:3.12 AS base
 
 COPY requirements.txt .
 
