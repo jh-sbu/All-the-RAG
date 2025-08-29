@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: All the RAG backend for AWS lambda via AWS SAM
+
+Parameters:
+  StageName:
+    Type: String
+    Default: prod
+    Description: API Gateway stage name (should always be prod)
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 10
+    MemorySize: 512
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        FLASK_ENV: production
+
+
+Resources:
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod 
+      EndpointConfiguration: REGIONAL
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: "'*'"
+
+  FlaskFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: app.lambda_handler
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Events:
+        SendMessage:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /send_message
+            Method: POST
+        GetMessage:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /get_message
+            Method: GET
+    MetaData:
+      BuildMethod: python3.12
+
+Outputs:
+  ApiUrl:
+    Description: Base URL for the API Gateway stage.
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/{StageName}"
+  SendMessageUrl:
+    Description: POST /send_message endpoint
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/{StageName}/send_message"
+  GetMessageUrl:
+    Description: GET /get_message endpoint
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/{StageName}/get_message"

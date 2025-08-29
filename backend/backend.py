@@ -6,6 +6,7 @@ from vdb.faiss import FaissIndex
 from providers.openrouter import OpenRouter
 from providers.llama_server import Llama
 import logging
+import awsgi
 
 app = Flask(__name__)
 
@@ -104,6 +105,10 @@ def get_example():
     return jsonify({"key": "value"}), 200
 
 
-print(__name__)
-if __name__ == "__main__":
-    app.run()
+# print(__name__)
+# if __name__ == "__main__":
+#     app.run()
+
+
+def lambda_handler(event, context):
+    return awsgi.handle_request(app, event, context)
