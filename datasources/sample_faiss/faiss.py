@@ -75,4 +75,3 @@ class FaissIndex(VDB):
 
     def load_index(self, filename: str):
         return faiss.read_index(filename)
-
