@@ -2,3 +2,4 @@
 __pycache__/
 providers/__pycache__/
 sandbox/
+.aws-sam/
