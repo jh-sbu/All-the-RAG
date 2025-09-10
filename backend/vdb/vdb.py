@@ -3,7 +3,7 @@ import abc
 
 class VDB(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def get_nearest(self, k: int, query: str):
+    def get_nearest(self, k: int, query: str) -> list[str]:
         """
         Get the k nearest matches for query stored in the vector DB
         """

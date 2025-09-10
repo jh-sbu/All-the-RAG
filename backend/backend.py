@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
+from vdb.amazons3vector import AmazonS3Vector
 from vdb.faiss import FaissIndex
 from providers.openrouter import OpenRouter
 from providers.llama_server import Llama
@@ -38,8 +39,20 @@ if not app.config["SECRET_KEY"]:
 
 CORS(app)
 
-example_faiss = FaissIndex("sandbox/example_faiss.faiss")
-example_faiss.get_nearest(3, "What is a woodchuck in minecraft?")
+vdb_provider = os.environ.get("VDB")
+
+
+vector_db = (
+    FaissIndex()
+    if vdb_provider == "FAISS"
+    else AmazonS3Vector()
+    if vdb_provider == "Amazon S3 Vector"
+    # Default fallback
+    else FaissIndex()
+)
+
+# example_faiss = FaissIndex("sandbox/example_faiss.faiss")
+# example_faiss.get_nearest(3, "What is a woodchuck in minecraft?")
 
 system_prompt = "You are a helpful assistant that assists users with the All the Mods modpacks for the video game Minecraft. Read the provided context and use it to respond to the user's query. Be concise - your job is to find the relevant information in the given context, not repeat everything you see word for word."
 
@@ -86,13 +99,17 @@ def send_message():
         return jsonify({"error": "No user prompt received"}), 400
 
     else:
+        app.logger.info(f"Received request: {data['messages']}")
         try:
             # TODO fix this kludge - why is the model failing to encode if
             # I don't do this?
             full_message = " ".join(
                 [message["content"] for message in data["messages"]]
             )
-            contexts = example_faiss.get_nearest(3, full_message)
+            contexts = vector_db.get_nearest(3, full_message)
+            app.logger.info(f"Received context: {contexts[0]}")
+            app.logger.info(f"Received context: {contexts[1]}")
+            app.logger.info(f"Received context: {contexts[2]}")
             return provider.request(contexts, data["messages"])
 
         except Exception as e:
