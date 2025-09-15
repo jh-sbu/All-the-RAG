@@ -9,7 +9,7 @@ from providers.llama_server import Llama
 import logging
 import awsgi
 
-app = Flask(__name__)
+backend = Flask(__name__)
 
 load_dotenv()
 log_level = os.environ.get("LOG_LEVEL")
@@ -33,11 +33,11 @@ logging.basicConfig(
     level=log_level, format="[%(asctime)s] [%(levelname)-8s] [%(name)s]: %(message)s"
 )
 
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
-if not app.config["SECRET_KEY"]:
+backend.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
+if not backend.config["SECRET_KEY"]:
     raise ValueError("Could not initialize SECRET_KEY for flask")
 
-CORS(app)
+CORS(backend)
 
 vdb_provider = os.environ.get("VDB")
 
@@ -67,31 +67,31 @@ else:
     raise ValueError("Specified completion provider is not supported")
 
 
-@app.route("/register", methods=["POST"])
+@backend.route("/register", methods=["POST"])
 def register():
     # return not_implemented_error
     return jsonify({"error": "Not yet implemented"}), 405
 
 
-@app.route("/login", methods=["POST"])
+@backend.route("/login", methods=["POST"])
 def login():
     # return not_implemented_error
     return jsonify({"error": "Not yet implemented"}), 405
 
 
-@app.route("/past_chats", methods=["GET"])
+@backend.route("/past_chats", methods=["GET"])
 def get_histories():
     # return not_implemented_error
     return jsonify({"error": "Not implemented yet"})
 
 
-@app.route("/chat_history", methods=["GET"])
+@backend.route("/chat_history", methods=["GET"])
 def get_chat_history():
     # return not_implemented_error
     return jsonify({"error": "Not yet implemented"}), 405
 
 
-@app.route("/send_message", methods=["POST"])
+@backend.route("/send_message", methods=["POST"])
 def send_message():
     data = request.get_json()
 
@@ -99,7 +99,7 @@ def send_message():
         return jsonify({"error": "No user prompt received"}), 400
 
     else:
-        app.logger.info(f"Received request: {data['messages']}")
+        backend.logger.info(f"Received request: {data['messages']}")
         try:
             # TODO fix this kludge - why is the model failing to encode if
             # I don't do this?
@@ -107,17 +107,17 @@ def send_message():
                 [message["content"] for message in data["messages"]]
             )
             contexts = vector_db.get_nearest(3, full_message)
-            app.logger.info(f"Received context: {contexts[0]}")
-            app.logger.info(f"Received context: {contexts[1]}")
-            app.logger.info(f"Received context: {contexts[2]}")
+            backend.logger.info(f"Received context: {contexts[0]}")
+            backend.logger.info(f"Received context: {contexts[1]}")
+            backend.logger.info(f"Received context: {contexts[2]}")
             return provider.request(contexts, data["messages"])
 
         except Exception as e:
-            app.logger.error(f"Error in chat stream: {str(e)}")
+            backend.logger.error(f"Error in chat stream: {str(e)}")
             return jsonify({"error": "Error reaching chatbot"}), 500
 
 
-@app.route("/example_page", methods=["GET"])
+@backend.route("/example_page", methods=["GET"])
 def get_example():
     return jsonify({"key": "value"}), 200
 
@@ -128,4 +128,4 @@ def get_example():
 
 
 def lambda_handler(event, context):
-    return awsgi.handle_request(app, event, context)
+    return awsgi.handle_request(backend, event, context)
