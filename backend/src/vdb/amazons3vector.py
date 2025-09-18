@@ -4,9 +4,26 @@ import boto3
 import os
 from mypy_boto3_bedrock_runtime.client import BedrockRuntimeClient
 
-PROFILE_NAME = os.environ.get("PROFILE_NAME")
-PROFILE_REGION = os.environ.get("PROFILE_REGION")
-EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL") or "amazon.titan-embed-text-v2:0"
+BUCKET_NAME = os.environ.get("BUCKET_NAME") or ""
+EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL") or ""
+INDEX_NAME = os.environ.get("INDEX_NAME") or ""
+PROFILE_NAME = os.environ.get("PROFILE_NAME") or ""
+PROFILE_REGION = os.environ.get("PROFILE_REGION") or ""
+
+if BUCKET_NAME == "":
+    raise RuntimeError("Could not find BUCKET_NAME environmental variable")
+
+if EMBEDDING_MODEL == "":
+    raise RuntimeError("Could not find EMBEDDING_MODEL environmental variable")
+
+if INDEX_NAME == "":
+    raise RuntimeError("Could not find INDEX_NAME environmental variable")
+
+if PROFILE_NAME == "":
+    raise RuntimeError("Could not find PROFILE_NAME environmental variable")
+
+if PROFILE_REGION == "":
+    raise RuntimeError("Could not find PROFILE_REGION environmental variable")
 
 
 def build_message(text: str) -> dict:
@@ -18,8 +35,9 @@ def build_message(text: str) -> dict:
 
 
 class AmazonS3Vector(VDB):
-    def __init__(self) -> None:
+    def __init__(self, top_k: int = 2) -> None:
         super().__init__()
+        self.top_k = top_k
 
     def get_nearest(self, k: int, query: str) -> list[str]:
         session = boto3.Session(profile_name=PROFILE_NAME)
@@ -42,6 +60,16 @@ class AmazonS3Vector(VDB):
         vector = payload.get("embedding") or payload["embeddingsByType"]["float"]
 
         # Now get k nearest from S3 Vectors
+
+        s3vectors = session.client("s3vectors", region_name=PROFILE_REGION)
+
+        nearest_k = s3vectors.query_vectors(
+            topK=self.top_k,
+            queryVector={"float32": vector},
+            vectorBucketName=BUCKET_NAME,
+            indexName=INDEX_NAME,
+            returnMetadata=True,
+        )
 
         return [
             "Test sentence please ignore",
