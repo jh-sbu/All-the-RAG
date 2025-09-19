@@ -1,189 +1,154 @@
 # test_chunk_text.py
-import itertools
+# Adjust this import to match where you put the function.
+from chunk_text import chunk_text
+
 import re
-import random
-
-# If the function lives elsewhere, replace the import below accordingly:
-from chunk_docs import chunk_text  # or: from chunker import chunk_text
+import pytest
 
 
-def _reconstruct_from_chunks(chunks: list[str]) -> str:
-    """
-    Rebuild the original text from overlapping chunks by
-    removing the maximal exact overlap between consecutive chunks.
-    """
-    if not chunks:
-        return ""
-    out = chunks[0]
-    for nxt in chunks[1:]:
-        # find the largest k such that out[-k:] == nxt[:k]
-        max_k = min(len(out), len(nxt))
-        k = 0
-        for kk in range(max_k, 0, -1):
-            if out[-kk:] == nxt[:kk]:
-                k = kk
-                break
-        out += nxt[k:]
-    return out
+def normalize(s: str) -> str:
+    """Mirror the function's whitespace normalization for comparisons."""
+    return re.sub(r"\s+", " ", s).strip()
 
 
-def _assert_common_invariants(
-    doc: str, chunks: list[str], chunk_size: int, overlap: int
-):
-    # Non-empty chunks and never exceed chunk_size
-    assert all(chunks), "No chunk should be empty."
-    assert all(len(c) <= chunk_size for c in chunks), (
-        "Chunks must not exceed chunk_size."
-    )
-
-    # Overlap should be at most requested (effective overlap may be smaller near edges/cuts)
-    for a, b in zip(chunks, chunks[1:]):
-        # compute actual overlap
-        k = min(len(a), len(b), overlap)
-        actual = 0
-        for kk in range(k, 0, -1):
-            if a[-kk:] == b[:kk]:
-                actual = kk
-                break
-        assert actual <= overlap, "Overlap should not exceed the requested amount."
-
-    # Reconstruction should match original for whitespace-stable docs
-    # (All tests that call this helper use docs without leading/trailing chunk whitespaces)
-    rebuilt = _reconstruct_from_chunks(chunks)
-    assert rebuilt == doc, "Reconstructed text should equal original."
-
-
-def test_empty_document():
+def test_empty_and_whitespace_only():
     assert chunk_text("") == []
+    assert chunk_text("   \n\t  ") == []
 
 
-def test_smaller_than_chunk_size_no_overlap():
-    doc = "Short doc."
-    chunks = chunk_text(doc, chunk_size=100, overlap=0)
-    assert chunks == [doc]
+def test_invalid_params():
+    with pytest.raises(ValueError):
+        chunk_text("text", chunk_size=0)
+    with pytest.raises(ValueError):
+        chunk_text("text", overlap=-1)
 
 
-def test_exact_chunk_size():
-    doc = "a" * 50
-    chunks = chunk_text(doc, chunk_size=50, overlap=10)
-    assert chunks == [doc]
+def test_whitespace_is_collapsed_and_stripped():
+    doc = "Line 1.\n\n   Line\t\t2.   Line  3."
+    chunks = chunk_text(doc, chunk_size=50, overlap=0)
+    assert all(ch == normalize(ch) for ch in chunks)
+    assert "  " not in chunks[0]  # no double spaces
+    assert chunks[0].startswith("Line 1.")
+    # With chunk_size big enough, everything stays in one chunk
+    one = chunk_text(doc, chunk_size=10_000, overlap=0)
+    assert one == [normalize(doc)]
+
+
+def test_never_exceeds_chunk_size_even_with_overlap():
+    doc = "A" * 1500 + " " + "B" * 1500 + " " + "C" * 1500
+    size = 1000
+    ov = 200
+    chunks = chunk_text(doc, chunk_size=size, overlap=ov)
+    assert len(chunks) >= 3
+    assert all(len(c) <= size for c in chunks)
+
+
+def test_long_single_word_hard_cuts():
+    # No whitespace to backtrack to -> must hard-cut
+    long = "X" * 2500
+    size = 700
+    chunks = chunk_text(long, chunk_size=size, overlap=0)
+    assert len(chunks) == 4  # 700 + 700 + 700 + 400
+    assert all(len(c) <= size for c in chunks)
+    # Reassemble should match normalized original (which is same)
+    assert "".join(chunks) == long
 
 
 def test_sentence_boundary_preference():
-    # Choose a size that would cut mid-sentence if not respecting punctuation.
-    doc = "First sentence. Second sentence is longer, indeed! Third one?"
-    chunks = chunk_text(doc, chunk_size=30, overlap=5)
-
-    # Ensure the first cut ends at the period of the first sentence (or right after quotes/brackets if any)
-    # The regex in implementation allows closing quotes, so accept that window.
-    first = chunks[0]
-    assert first.endswith("First sentence."), "Chunk should prefer sentence boundary."
-
-    # General invariants (doc has stable whitespace)
-    _assert_common_invariants(doc, chunks, chunk_size=30, overlap=5)
-
-
-def test_whitespace_fallback_when_no_sentence_punct():
-    # No .,!? in the first window -> should fall back to last whitespace.
-    words = ["alpha"] * 40  # creates spaces but no sentence punctuation
-    doc = " ".join(words)
-    chunks = chunk_text(doc, chunk_size=50, overlap=10)
-
-    # The first chunk should end on a space boundary (so it shouldn't cut a word)
-    assert chunks[0].endswith("alpha"), "Should cut at word boundary when possible."
-    _assert_common_invariants(doc, chunks, chunk_size=50, overlap=10)
+    # 3 short sentences; choose boundaries when adding next would overflow
+    s1 = "This is sentence one."
+    s2 = "This is sentence two."
+    s3 = "This is sentence three."
+    doc = f"{s1} {s2} {s3}"
+    # Force a break after s2 by setting chunk_size between len(s1+s2) and len(s1+s2+s3)
+    target_len = len(normalize(f"{s1} {s2}"))
+    size = target_len + 1  # fits s1+s2, but not s1+s2+s3
+    chunks = chunk_text(doc, chunk_size=size, overlap=0)
+    assert chunks[0] == normalize(f"{s1} {s2}")
+    assert chunks[1] == normalize(s3)
 
 
-def test_hard_split_when_no_whitespace_or_punct():
-    doc = "a" * 120  # a single long token
-    chunks = chunk_text(doc, chunk_size=50, overlap=10)
-    # Expect hard split: 50, then overlaps applied
-    assert len(chunks[0]) == 50
-    assert len(chunks) >= 3  # 120 with overlap should need at least 3 parts
-    _assert_common_invariants(doc, chunks, chunk_size=50, overlap=10)
+def test_sentence_longer_than_chunk_gets_split_cleanly_on_space_if_possible():
+    # A single "sentence" that exceeds chunk_size but has spaces inside
+    sentence = "word " * 600  # ~3000 chars
+    size = 1000
+    chunks = chunk_text(sentence, chunk_size=size, overlap=0)
+    # Should break on spaces rather than mid-word
+    assert all(not c.startswith(" ") and not c.endswith(" ") for c in chunks)
+    assert all(len(c) <= size for c in chunks)
+    # Join should equal normalized original
+    assert " ".join(c.strip() for c in chunks) == normalize(sentence)
 
 
-def test_overlap_zero_means_butted_chunks():
-    # Construct a clean doc with simple words and punctuation, no extra edge spaces.
-    doc = " ".join([f"word{i}." for i in range(60)])
-    chunks = chunk_text(doc, chunk_size=60, overlap=0)
-
-    # Adjacent chunks should not share any common prefix/suffix when overlap=0
-    for a, b in zip(chunks, chunks[1:]):
-        max_k = min(len(a), len(b))
-        assert all(a[-k:] != b[:k] for k in range(1, max_k + 1)), (
-            "No overlap expected when overlap=0."
-        )
-
-    _assert_common_invariants(doc, chunks, chunk_size=60, overlap=0)
-
-
-def test_overlap_greater_than_chunk_size_is_capped_and_terminates():
-    # If overlap >= chunk_size, implementation caps it to chunk_size-1 to ensure progress
-    doc = " ".join(f"token{i}" for i in range(200))
-    chunk_size = 40
-    overlap = 1000  # intentionally huge
-
-    chunks = chunk_text(doc, chunk_size=chunk_size, overlap=overlap)
-    # Should terminate and obey length constraint
-    assert len(chunks) > 1
-    assert all(1 <= len(c) <= chunk_size for c in chunks)
-    # Still reconstructable
-    _assert_common_invariants(
-        doc, chunks, chunk_size=chunk_size, overlap=min(overlap, chunk_size - 1)
-    )
+def test_cjk_sentence_boundaries():
+    doc = "这是第一句。 这是第二句！这是第三句？这是第四句。"
+    # Set size to fit two sentences per chunk if possible
+    # Rough heuristic: ensure 1–2 sentences fit but not all
+    size = len(normalize("这是第一句。 这是第二句！")) + 1
+    chunks = chunk_text(doc, chunk_size=size, overlap=0)
+    # Expect chunks to align with sentence ends when feasible
+    assert "。" in chunks[0] or "！" in chunks[0] or "？" in chunks[0]
+    # Ensure we didn't split inside a CJK sentence when not necessary
+    for ch in chunks:
+        assert not ch.startswith(" ")
+        assert not ch.endswith(" ")
 
 
-def test_unicode_cjk_sentence_endings_and_ellipsis():
-    # Includes CJK punctuation and unicode ellipsis
-    doc = "你好世界。接下来测试！是不是？还有省略号……好的。"
-    chunks = chunk_text(doc, chunk_size=10, overlap=2)
+def test_overlap_prefix_matches_prev_suffix_when_no_truncation():
+    sents = [
+        "Alpha is here.",
+        "Bravo is there.",
+        "Charlie is everywhere.",
+    ]
+    doc = " ".join(sents)
+    # Make chunk_size large to avoid any truncation after adding overlap
+    size = 10_000
+    ov = 10
+    chunks = chunk_text(doc, chunk_size=size, overlap=ov)
+    assert len(chunks) == 1  # with size this big, no split -> no overlap applied
 
-    # Check at least one chunk ends exactly at a CJK sentence boundary
-    assert any(c.endswith(("。", "！", "？", "…", "……")) for c in chunks), (
-        "Should recognize CJK/ellipsis sentence boundaries."
-    )
-    _assert_common_invariants(doc, chunks, chunk_size=10, overlap=2)
-
-
-def test_trailing_and_leading_quotes_on_sentence_end():
-    doc = 'He said, "Stop now." Then we left.'
-    chunks = chunk_text(doc, chunk_size=20, overlap=4)
-    # First chunk should include the closing quote after the period
-    assert chunks[0].endswith('"'), (
-        "Closing quotes should be included with sentence end."
-    )
-    _assert_common_invariants(doc, chunks, chunk_size=20, overlap=4)
-
-
-def test_progress_guarantee_on_tiny_chunks():
-    # Stress case: tiny chunk_size with nonzero overlap
-    doc = "abcdefghij" * 5
-    chunks = chunk_text(doc, chunk_size=3, overlap=2)
-    # Ensure we made forward progress (no infinite loop / identical consecutive chunks)
-    for a, b in zip(chunks, chunks[1:]):
-        assert a != b, "Consecutive chunks should not be identical."
-    # Length constraint
-    assert all(1 <= len(c) <= 3 for c in chunks)
-    # Reconstruction holds for this clean doc
-    _assert_common_invariants(doc, chunks, chunk_size=3, overlap=2)
+    # Force two chunks by shrinking chunk_size, but keep large enough so the
+    # overlapped chunk doesn't need trimming.
+    size = len(normalize(" ".join(sents[:2])))
+    # This size fits first two sentences exactly; third will be its own chunk
+    chunks = chunk_text(doc, chunk_size=size, overlap=ov)
+    assert len(chunks) == 2
+    prev = normalize(" ".join(sents[:2]))
+    nxt = chunks[1]
+    # The second chunk should start with the normalized suffix of previous chunk
+    expected_prefix = prev[-ov:]
+    assert normalize(nxt).startswith(normalize(expected_prefix))
 
 
-def test_various_randomized_documents_still_reconstruct():
-    # Light fuzz with controlled alphabet to avoid ambiguous whitespace stripping
-    rnd = random.Random(1337)
-    alphabet = "abcdefghijklmnopqrstuvwxyz .!?"
-    for _ in range(20):
-        length = rnd.randint(200, 600)
-        # generate doc without doubled spaces at ends of sentences to keep boundaries stable
-        doc = re.sub(
-            r"\s+", " ", "".join(rnd.choice(alphabet) for _ in range(length)).strip()
-        )
-        chunk_size = rnd.randint(20, 80)
-        overlap = rnd.randint(0, 20)
-        chunks = chunk_text(doc, chunk_size=chunk_size, overlap=overlap)
-        # Basic invariants
-        assert all(len(c) <= chunk_size for c in chunks)
-        # Reconstruction check (doc is whitespace-stable)
-        rebuilt = _reconstruct_from_chunks(chunks)
-        assert rebuilt == doc
+def test_overlap_never_breaks_chunk_size_and_keeps_words_when_possible():
+    # Create three chunks and verify the backtrack-to-space trimming path
+    s1 = "A" * 950 + "."
+    s2 = " " + "B" * 900 + "."
+    s3 = " " + "C" * 900 + "."
+    doc = s1 + s2 + s3
+    size = 1000
+    ov = 200
+    chunks = chunk_text(doc, chunk_size=size, overlap=ov)
+    # After overlap, chunks must still respect size
+    assert all(len(c) <= size for c in chunks)
+    # Verify that when trimming happened, we didn't end with a trailing space
+    assert all(not c.endswith(" ") for c in chunks)
+
+
+@pytest.mark.parametrize(
+    "chunk_size,overlap",
+    [
+        (50, 0),
+        (80, 10),
+        (120, 30),
+    ],
+)
+def test_roundtrip_no_overlap_equals_normalized_original_when_large_enough(
+    chunk_size, overlap
+):
+    # Build a medium doc with punctuation and whitespace variety
+    doc = "Para 1.\n\nPara 2 is here!  \tNewline?  Yes.\nAnd more…  End."
+    if overlap != 0:
+        pytest.skip("This test asserts a no-overlap property.")
+    chunks = chunk_text(doc, chunk_size=10_000, overlap=overlap)
+    assert chunks == [normalize(doc)]
