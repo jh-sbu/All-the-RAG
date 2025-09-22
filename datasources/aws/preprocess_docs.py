@@ -4,6 +4,10 @@ import os
 from mypy_boto3_bedrock_runtime.client import BedrockRuntimeClient
 from chunk_text import chunk_text
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 BUCKET_NAME = os.environ.get("BUCKET_NAME") or ""
 INDEX_NAME = os.environ.get("INDEX_NAME") or ""
 MODEL_ID = os.environ.get("MODEL_ID") or ""
@@ -58,5 +62,9 @@ def chunk_and_upload(
 
             payload = json.loads(res["body"].read())
             vector = payload.get("embedding") or payload["embeddingsByType"]["float"]
+
+            print("Vector:")
+            print(vector)
+            print("\n\n")
 
             # Create a dictionary for uploading to S3 vectors
