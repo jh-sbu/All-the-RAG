@@ -66,29 +66,32 @@ def chunk_and_upload(
             payload = json.loads(res["body"].read())
             vector = payload.get("embedding") or payload["embeddingsByType"]["float"]
 
-            print("Vector:")
-            print(vector)
+            print("len(Vector):")
+            print(len(vector))
             print("\n\n")
 
             # Create a dictionary for uploading to S3 vectors
 
-            vectors.append(
-                {
-                    "key": f"vector-{docname}-{i}",
-                    "data": {"float32": vector},
-                    "metadata": {
-                        "url": "NOT IMPLEMENTED",
-                        "summary": "NOT IMPLEMENTED",
-                        "category": "NOT IMPLEMENTED",
-                        "text": chunk,
-                    },
-                }
-            )
+            new_vec = {
+                "key": f"vector-{docname}-{i}",
+                "data": {"float32": vector},
+                "metadata": {
+                    "url": "NOT IMPLEMENTED",
+                    "summary": "NOT IMPLEMENTED",
+                    "category": "NOT IMPLEMENTED",
+                    "text": chunk,
+                },
+            }
+
+            # print("Created new dict:")
+            # print(new_vec)
+
+            vectors.append(new_vec)
 
         # Upload this doc's vectors to s3
         res = s3vectors.put_vectors(
             vectorBucketName=BUCKET_NAME, indexName=INDEX_NAME, vectors=vectors
         )
 
-        print("Got Response:")
-        print(res)
+        # print("Got Response:")
+        # print(res)
