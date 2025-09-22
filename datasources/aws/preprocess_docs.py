@@ -39,17 +39,20 @@ def build_message(text: str) -> dict:
 
 
 def chunk_and_upload(
-    docs: list[str], chunk_size: int = 1000, overlap: int = 200
+    docs: list[tuple[str, str]], chunk_size: int = 1000, overlap: int = 200
 ) -> None:
     session = boto3.Session(profile_name=PROFILE_NAME)
+    s3vectors = session.client("s3vectors", region_name=REGION_NAME)
 
     bedrock: BedrockRuntimeClient = session.client(
         "bedrock-runtime", region_name=REGION_NAME
     )
-    for doc in docs:
+    for docname, doc in docs:
         chunks = chunk_text(doc, chunk_size=chunk_size, overlap=overlap)
 
-        for chunk in chunks:
+        vectors = []
+
+        for i, chunk in enumerate(chunks):
             req = build_message(chunk)
 
             # Embed the chunk
@@ -68,3 +71,24 @@ def chunk_and_upload(
             print("\n\n")
 
             # Create a dictionary for uploading to S3 vectors
+
+            vectors.append(
+                {
+                    "key": f"vector-{docname}-{i}",
+                    "data": {"float32": vector},
+                    "metadata": {
+                        "url": "NOT IMPLEMENTED",
+                        "summary": "NOT IMPLEMENTED",
+                        "category": "NOT IMPLEMENTED",
+                        "text": chunk,
+                    },
+                }
+            )
+
+        # Upload this doc's vectors to s3
+        res = s3vectors.put_vectors(
+            vectorBucketName=BUCKET_NAME, indexName=INDEX_NAME, vectors=vectors
+        )
+
+        print("Got Response:")
+        print(res)
