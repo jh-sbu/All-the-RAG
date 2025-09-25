@@ -1,8 +1,12 @@
 import json
-import os
+from tqdm import tqdm
+
+from git import Repo
 
 import jsonschema
 from jsonschema import validate
+
+import time
 
 schema = {
     "type": "array",
@@ -19,7 +23,7 @@ schema = {
 }
 
 
-def list_sources(filename: str) -> list[str]:
+def list_sources(filename: str) -> list[dict]:
     github_list = []
     with open(filename, "r") as f:
         try:
@@ -28,10 +32,12 @@ def list_sources(filename: str) -> list[str]:
 
             for item in data:
                 if item["source"] is None:
-                    print("No source found")
+                    # print("No source found")
+                    pass
                 else:
+                    print(f"Name:          : {item['name']}")
                     print(f"Source         : {item['source']}")
-                    github_list.append(item["source"])
+                    github_list.append(item)
 
         except jsonschema.ValidationError as e:
             print(f"Could not validate schema: {e.message}")
@@ -42,5 +48,9 @@ def list_sources(filename: str) -> list[str]:
 if __name__ == "__main__":
     github_list = list_sources("sandbox/mod_sources.json")
 
-    for github in github_list:
-        print(":q")
+    print(len(github_list))
+
+    for github in tqdm(github_list):
+        print(f"Downloading github {github['name']} from repo: {github['source']}")
+        Repo.clone_from(github["source"], f"github_repos/{github['name']}")
+        time.sleep(60)
