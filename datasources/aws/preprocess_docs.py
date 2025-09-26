@@ -6,6 +6,16 @@ from chunk_text import chunk_text
 
 from dotenv import load_dotenv
 
+from typing import NamedTuple
+
+
+class IndexFile(NamedTuple):
+    repo_name: str
+    filepath: str
+    filename: str
+    repo_remote_origin: str
+
+
 load_dotenv()
 
 BUCKET_NAME = os.environ.get("BUCKET_NAME") or ""
