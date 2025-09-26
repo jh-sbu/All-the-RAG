@@ -1,3 +1,4 @@
+from pathlib import Path
 import boto3
 import json
 import os
@@ -12,7 +13,7 @@ from typing import NamedTuple
 class IndexFile(NamedTuple):
     repo_name: str
     filepath: str
-    filename: str
+    file_relpath: str
     repo_remote_origin: str
 
 
@@ -49,7 +50,7 @@ def build_message(text: str) -> dict:
 
 
 def chunk_and_upload(
-    docs: list[tuple[str, str]], chunk_size: int = 1000, overlap: int = 200
+    docs: list[IndexFile], chunk_size: int = 1000, overlap: int = 200
 ) -> None:
     session = boto3.Session(profile_name=PROFILE_NAME)
     s3vectors = session.client("s3vectors", region_name=REGION_NAME)
@@ -57,7 +58,12 @@ def chunk_and_upload(
     bedrock: BedrockRuntimeClient = session.client(
         "bedrock-runtime", region_name=REGION_NAME
     )
-    for docname, doc in docs:
+    for reponame, filepath, file_relpath, repo_remote_origin in docs:
+        with open(filepath, "r") as f:
+            doc = f.read()
+
+        filename = Path(file_relpath).name
+
         chunks = chunk_text(doc, chunk_size=chunk_size, overlap=overlap)
 
         vectors = []
@@ -66,42 +72,42 @@ def chunk_and_upload(
             req = build_message(chunk)
 
             # Embed the chunk
-            res = bedrock.invoke_model(
-                modelId=MODEL_ID,
-                body=json.dumps(req),
-                accept="application/json",
-                contentType="application/json",
-            )
+            # res = bedrock.invoke_model(
+            #     modelId=MODEL_ID,
+            #     body=json.dumps(req),
+            #     accept="application/json",
+            #     contentType="application/json",
+            # )
 
-            payload = json.loads(res["body"].read())
-            vector = payload.get("embedding") or payload["embeddingsByType"]["float"]
+            # payload = json.loads(res["body"].read())
+            # vector = payload.get("embedding") or payload["embeddingsByType"]["float"]
 
-            print("len(Vector):")
-            print(len(vector))
-            print("\n\n")
+            vector = [1.0, 2.0, 3.0]
 
             # Create a dictionary for uploading to S3 vectors
 
             new_vec = {
-                "key": f"vector-{docname}-{i}",
+                "key": f"vector-{reponame}-{filename}-{i}",
                 "data": {"float32": vector},
                 "metadata": {
-                    "url": "NOT IMPLEMENTED",
+                    "url": repo_remote_origin,
                     "summary": "NOT IMPLEMENTED",
                     "category": "NOT IMPLEMENTED",
                     "text": chunk,
                 },
             }
 
-            # print("Created new dict:")
-            # print(new_vec)
+            print("Created new dict:")
+            print(f"Filename: {filename}")
+            print(new_vec)
+            print("\n\n")
 
             vectors.append(new_vec)
 
         # Upload this doc's vectors to s3
-        res = s3vectors.put_vectors(
-            vectorBucketName=BUCKET_NAME, indexName=INDEX_NAME, vectors=vectors
-        )
+        # res = s3vectors.put_vectors(
+        #     vectorBucketName=BUCKET_NAME, indexName=INDEX_NAME, vectors=vectors
+        # )
 
         # print("Got Response:")
         # print(res)

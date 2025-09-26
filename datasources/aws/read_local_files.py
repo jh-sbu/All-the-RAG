@@ -4,7 +4,7 @@ import json
 
 import jsonschema
 
-from preprocess_docs import IndexFile
+from preprocess_docs import IndexFile, chunk_and_upload
 
 
 index_schema = {
@@ -54,9 +54,11 @@ if __name__ == "__main__":
     parser.add_argument("filename")
     args = parser.parse_args()
 
-    stuff = read_index_json(args.filename)
+    docs = read_index_json(args.filename)
 
     print("Read file")
 
-    for thing in stuff:
-        print(f"Thing: {thing}")
+    for doc in docs:
+        print(f"Thing: {doc}")
+
+    chunk_and_upload(docs)
