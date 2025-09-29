@@ -1,13 +1,17 @@
+import json
+import logging
 from pathlib import Path
 import boto3
-import json
 import os
 from mypy_boto3_bedrock_runtime.client import BedrockRuntimeClient
 from chunk_text import chunk_text
+from tqdm import tqdm
 
 from dotenv import load_dotenv
 
 from typing import NamedTuple
+
+logger = logging.getLogger(__name__)
 
 
 class IndexFile(NamedTuple):
@@ -58,7 +62,7 @@ def chunk_and_upload(
     bedrock: BedrockRuntimeClient = session.client(
         "bedrock-runtime", region_name=REGION_NAME
     )
-    for reponame, filepath, file_relpath, repo_remote_origin in docs:
+    for reponame, filepath, file_relpath, repo_remote_origin in tqdm(docs):
         with open(filepath, "r") as f:
             doc = f.read()
 
@@ -72,17 +76,17 @@ def chunk_and_upload(
             req = build_message(chunk)
 
             # Embed the chunk
-            # res = bedrock.invoke_model(
-            #     modelId=MODEL_ID,
-            #     body=json.dumps(req),
-            #     accept="application/json",
-            #     contentType="application/json",
-            # )
+            res = bedrock.invoke_model(
+                modelId=MODEL_ID,
+                body=json.dumps(req),
+                accept="application/json",
+                contentType="application/json",
+            )
 
-            # payload = json.loads(res["body"].read())
-            # vector = payload.get("embedding") or payload["embeddingsByType"]["float"]
+            payload = json.loads(res["body"].read())
+            vector = payload.get("embedding") or payload["embeddingsByType"]["float"]
 
-            vector = [1.0, 2.0, 3.0]
+            # vector = [1.0, 2.0, 3.0]
 
             # Create a dictionary for uploading to S3 vectors
 
@@ -97,17 +101,19 @@ def chunk_and_upload(
                 },
             }
 
-            print("Created new dict:")
-            print(f"Filename: {filename}")
-            print(new_vec)
-            print("\n\n")
+            logger.debug("Created new dict:")
+            logger.debug(f"Filename: {filename}")
+            logger.debug(new_vec)
+            logger.debug("\n\n")
 
             vectors.append(new_vec)
 
         # Upload this doc's vectors to s3
-        # res = s3vectors.put_vectors(
-        #     vectorBucketName=BUCKET_NAME, indexName=INDEX_NAME, vectors=vectors
-        # )
 
-        # print("Got Response:")
-        # print(res)
+        logger.debug(f"Uploading {len(vectors)} vector(s) to S3")
+
+        res = s3vectors.put_vectors(
+            vectorBucketName=BUCKET_NAME, indexName=INDEX_NAME, vectors=vectors
+        )
+
+        logger.debug(f"Got Repsonse:\n{res}")

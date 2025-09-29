@@ -1,11 +1,13 @@
 # from collections import namedtuple
 import argparse
 import json
+import logging
 
 import jsonschema
 
 from preprocess_docs import IndexFile, chunk_and_upload
 
+logger = logging.getLogger(__name__)
 
 index_schema = {
     "type": "array",
@@ -54,11 +56,20 @@ if __name__ == "__main__":
     parser.add_argument("filename")
     args = parser.parse_args()
 
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(levelname)s: %(asctime)s - %(name)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    # handler = logging.StreamHandler()
+    # handler.setFormatter(formatter)
+    # logger.addHandler(handler)
+
     docs = read_index_json(args.filename)
 
-    print("Read file")
+    logger.info(f"Read {len(docs)} docs")
 
     for doc in docs:
-        print(f"Thing: {doc}")
+        logger.debug(f"Doc: {doc}")
 
     chunk_and_upload(docs)
