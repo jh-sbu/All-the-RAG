@@ -128,4 +128,4 @@ def get_example():
 
 
 def lambda_handler(event, context):
-    return awsgi.handle_request(backend, event, context)
+    return awsgi.response(backend, event, context)
