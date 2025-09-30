@@ -4,11 +4,11 @@ import boto3
 import os
 from mypy_boto3_bedrock_runtime.client import BedrockRuntimeClient
 
+AWS_REGION = os.environ.get("AWS_REGION") or ""
 BUCKET_NAME = os.environ.get("BUCKET_NAME") or ""
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL") or ""
 INDEX_NAME = os.environ.get("INDEX_NAME") or ""
 PROFILE_NAME = os.environ.get("PROFILE_NAME") or ""
-PROFILE_REGION = os.environ.get("PROFILE_REGION") or ""
 
 if BUCKET_NAME == "":
     raise RuntimeError("Could not find BUCKET_NAME environmental variable")
@@ -22,7 +22,7 @@ if INDEX_NAME == "":
 if PROFILE_NAME == "":
     raise RuntimeError("Could not find PROFILE_NAME environmental variable")
 
-if PROFILE_REGION == "":
+if AWS_REGION == "":
     raise RuntimeError("Could not find PROFILE_REGION environmental variable")
 
 
@@ -43,9 +43,7 @@ class AmazonS3Vector(VDB):
         session = boto3.Session(profile_name=PROFILE_NAME)
 
         # Get the vector embedding
-        bedrock: BedrockRuntimeClient = session.client(
-            "bedrock-runtime", PROFILE_REGION
-        )
+        bedrock: BedrockRuntimeClient = session.client("bedrock-runtime", AWS_REGION)
 
         req = build_message(query)
 
@@ -61,7 +59,7 @@ class AmazonS3Vector(VDB):
 
         # Now get k nearest from S3 Vectors
 
-        s3vectors = session.client("s3vectors", region_name=PROFILE_REGION)
+        s3vectors = session.client("s3vectors", region_name=AWS_REGION)
 
         nearest_k = s3vectors.query_vectors(
             topK=self.top_k,
