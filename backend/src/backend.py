@@ -32,9 +32,9 @@ else:
     else:
         log_level = logging.INFO
 
-logging.basicConfig(
-    level=log_level, format="[%(asctime)s] [%(levelname)-8s] [%(name)s]: %(message)s"
-)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(log_level)
 
 backend.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 if not backend.config["SECRET_KEY"]:
@@ -102,7 +102,7 @@ def send_message():
         return jsonify({"error": "No user prompt received"}), 400
 
     else:
-        backend.logger.info(f"Received request: {data['messages']}")
+        logger.info(f"Received request: {data['messages']}")
         try:
             # TODO fix this kludge - why is the model failing to encode if
             # I don't do this?
@@ -110,9 +110,9 @@ def send_message():
                 [message["content"] for message in data["messages"]]
             )
             contexts = vector_db.get_nearest(3, full_message)
-            backend.logger.info(f"Received context: {contexts[0]}")
-            backend.logger.info(f"Received context: {contexts[1]}")
-            backend.logger.info(f"Received context: {contexts[2]}")
+            logger.info(f"Received context: {contexts[0]}")
+            logger.info(f"Received context: {contexts[1]}")
+            logger.info(f"Received context: {contexts[2]}")
             return provider.request(contexts, data["messages"])
 
         except Exception as e:
