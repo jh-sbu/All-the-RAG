@@ -4,3 +4,4 @@ providers/__pycache__/
 sandbox/
 .aws-sam/
 samconfig.toml
+env.json
