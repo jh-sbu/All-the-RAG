@@ -9,11 +9,11 @@ from providers.provider import Provider
 
 
 def get_model_name():
-    model_name = os.environ.get("MODEL")
-    if model_name is None:
+    completion_model_name = os.environ.get("COMPLETION_MODEL")
+    if completion_model_name is None:
         raise ValueError("Could not find the name of the model for OpenRouter")
 
-    return model_name
+    return completion_model_name
 
 
 def get_client() -> openai.OpenAI:

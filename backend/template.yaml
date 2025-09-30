@@ -51,6 +51,18 @@ Resources:
             RestApiId: !Ref ApiGateway
             Path: /get_message
             Method: GET
+      Environment:
+        Variables:
+          BUCKET_NAME: ""
+          EMBEDDING_MODEL: ""
+          INDEX_NAME: ""
+          PROFILE_NAME: ""
+          PROFILE_REGION: ""
+          SECRET_KEY: ""
+          COMPLETION_PROVIDER: ""
+          COMPLETION_MODEL: ""
+          BASE_URL: ""
+          API_KEY: ""
     MetaData:
       BuildMethod: python3.12
 

@@ -12,6 +12,9 @@ import awsgi
 backend = Flask(__name__)
 
 load_dotenv()
+
+# raise Exception(os.environ.keys())
+
 log_level = os.environ.get("LOG_LEVEL")
 if not log_level:
     log_level = logging.INFO
