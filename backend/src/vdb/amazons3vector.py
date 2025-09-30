@@ -1,3 +1,4 @@
+import logging
 from flask import json
 from vdb.vdb import VDB
 import boto3
@@ -34,13 +35,21 @@ def build_message(text: str) -> dict:
     }
 
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+
 class AmazonS3Vector(VDB):
-    def __init__(self, top_k: int = 2) -> None:
+    def __init__(self, top_k: int = 2, log_level=logging.INFO) -> None:
         super().__init__()
         self.top_k = top_k
+        self.log_level = log_level
 
     def get_nearest(self, k: int, query: str) -> list[str]:
-        session = boto3.Session(profile_name=PROFILE_NAME)
+        logger = logging.getLogger(__name__)
+        logger.setLevel(self.log_level)
+        # session = boto3.Session(profile_name=PROFILE_NAME)
+        session = boto3.Session()
 
         # Get the vector embedding
         bedrock: BedrockRuntimeClient = session.client("bedrock-runtime", AWS_REGION)
@@ -68,6 +77,15 @@ class AmazonS3Vector(VDB):
             indexName=INDEX_NAME,
             returnMetadata=True,
         )
+
+        if "vectors" in nearest_k.keys():
+            retrieved_context = []
+            for vector in nearest_k["vectors"]:
+                if "metadata" in vector.keys():
+                    if "text" in vector["metadata"].keys():
+                        retrieved_context.append(vector["metadata"]["text"])
+
+            return retrieved_context
 
         return [
             "Test sentence please ignore",

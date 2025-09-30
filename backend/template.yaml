@@ -11,7 +11,7 @@ Parameters:
 Globals:
   Function:
     Runtime: python3.12
-    Timeout: 10
+    Timeout: 30
     MemorySize: 512
     Architectures:
       - x86_64
@@ -63,6 +63,8 @@ Resources:
           COMPLETION_MODEL: ""
           BASE_URL: ""
           API_KEY: ""
+          LOG_LEVEL: ""
+          VDB: ""
     MetaData:
       BuildMethod: python3.12
 

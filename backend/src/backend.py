@@ -16,6 +16,7 @@ load_dotenv()
 # raise Exception(os.environ.keys())
 
 log_level = os.environ.get("LOG_LEVEL")
+print(f"Log level: {log_level}")
 if not log_level:
     log_level = logging.INFO
 else:
@@ -48,14 +49,14 @@ vdb_provider = os.environ.get("VDB")
 vector_db = (
     FaissIndex()
     if vdb_provider == "FAISS"
-    else AmazonS3Vector()
+    else AmazonS3Vector(log_level=log_level)
     if vdb_provider == "Amazon S3 Vector"
     # Default fallback
     else FaissIndex()
 )
 
-# example_faiss = FaissIndex("sandbox/example_faiss.faiss")
-# example_faiss.get_nearest(3, "What is a woodchuck in minecraft?")
+logger.debug(f"VDB provider read as: {vdb_provider}")
+logger.debug(f"Created vector db interface of type {type(vector_db)}")
 
 system_prompt = "You are a helpful assistant that assists users with the All the Mods modpacks for the video game Minecraft. Read the provided context and use it to respond to the user's query. Be concise - your job is to find the relevant information in the given context, not repeat everything you see word for word."
 
@@ -102,7 +103,7 @@ def send_message():
         return jsonify({"error": "No user prompt received"}), 400
 
     else:
-        logger.info(f"Received request: {data['messages']}")
+        logger.debug(f"Received request: {data['messages']}")
         try:
             # TODO fix this kludge - why is the model failing to encode if
             # I don't do this?
@@ -110,13 +111,14 @@ def send_message():
                 [message["content"] for message in data["messages"]]
             )
             contexts = vector_db.get_nearest(3, full_message)
-            logger.info(f"Received context: {contexts[0]}")
-            logger.info(f"Received context: {contexts[1]}")
-            logger.info(f"Received context: {contexts[2]}")
+            for context in contexts:
+                logger.debug(f"Received context: {context}")
+
+            logger.debug("Querying provider")
             return provider.request(contexts, data["messages"])
 
         except Exception as e:
-            backend.logger.error(f"Error in chat stream: {str(e)}")
+            logger.error(f"Error in chat stream: {str(e)}")
             return jsonify({"error": "Error reaching chatbot"}), 500
 
 
