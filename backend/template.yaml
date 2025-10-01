@@ -7,6 +7,31 @@ Parameters:
     Type: String
     Default: prod
     Description: API Gateway stage name (should always be prod)
+  BaseUrl:
+    Type: String
+    Description: URL for the completion provider api
+  BucketName:
+    Type: String
+    Description: Bucket name for the S3 Vectors bucket
+  CompletionModel:
+    Type: String
+    Description: Name of the completion model
+  CompletionProvider:
+    Type: String
+    Description: Name of completion provider service
+  EmbeddingModel:
+    Type: String
+    Description: Embedding model name
+  IndexName:
+    Type: String
+    Description: S3 Vectors index name
+  ProfileName:
+    Type: String
+    Description: AWS Profile name (for auth, do I need this here?)
+  ProfileRegion:
+    Type: String
+    Description: AWS Region
+
 
 Globals:
   Function:
@@ -53,18 +78,18 @@ Resources:
             Method: GET
       Environment:
         Variables:
-          BUCKET_NAME: ""
-          EMBEDDING_MODEL: ""
-          INDEX_NAME: ""
-          PROFILE_NAME: ""
-          PROFILE_REGION: ""
-          SECRET_KEY: ""
-          COMPLETION_PROVIDER: ""
-          COMPLETION_MODEL: ""
-          BASE_URL: ""
           API_KEY: ""
-          LOG_LEVEL: ""
-          VDB: ""
+          BASE_URL: !Ref BaseUrl
+          BUCKET_NAME: !Ref BucketName
+          COMPLETION_MODEL: !Ref CompletionModel
+          COMPLETION_PROVIDER: !Ref CompletionProvider
+          EMBEDDING_MODEL: !Ref EmbeddingModel
+          INDEX_NAME: !Ref IndexName
+          LOG_LEVEL: "info"
+          PROFILE_NAME: !Ref ProfileName
+          PROFILE_REGION: !Ref ProfileRegion
+          SECRET_KEY: ""
+          VDB: "Amazon S3 Vector"
     MetaData:
       BuildMethod: python3.12
 
