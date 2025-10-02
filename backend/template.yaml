@@ -15,6 +15,9 @@ Parameters:
   BucketName:
     Type: String
     Description: Bucket name for the S3 Vectors bucket
+  BucketNumber:
+    Type: String
+    Description: The number associated with the S3 vectors bucket
   CompletionModel:
     Type: String
     Description: Name of the completion model
@@ -68,6 +71,12 @@ Resources:
                 - bedrock:InvokeModel
               Resource:
                 - !Sub arn:aws:bedrock:${AWS::Region}::foundation-model/*
+            - Effect: Allow
+              Action:
+                - s3vectors:QueryVectors
+                - s3vectors:GetVectors
+              Resource:
+                - !Sub arn:aws:s3vectors:${AWS::Region}:${BucketNumber}:bucket/${BucketName}/index/${IndexName}
       Events:
         SendMessage:
           Type: Api
