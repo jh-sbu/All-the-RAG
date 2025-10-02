@@ -1,4 +1,6 @@
-AWSTemplateFormatVersion: '2010-09-09'
+# yaml-language-server: $schema=https://raw.githubusercontent.com/aws/serverless-application-model/main/samtranslator/schema/schema.json
+
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: All the RAG backend for AWS lambda via AWS SAM
 
@@ -32,7 +34,6 @@ Parameters:
     Type: String
     Description: AWS Region
 
-
 Globals:
   Function:
     Runtime: python3.12
@@ -44,12 +45,11 @@ Globals:
       Variables:
         FLASK_ENV: production
 
-
 Resources:
   ApiGateway:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: Prod 
+      StageName: Prod
       EndpointConfiguration: REGIONAL
       Cors:
         AllowMethods: "'GET,POST,OPTIONS'"
@@ -65,7 +65,7 @@ Resources:
         - Statement:
             - Effect: Allow
               Action:
-                - bedrock: InvokeModel
+                - bedrock:InvokeModel
               Resource:
                 - !Sub arn:aws:bedrock:${AWS::Region}::foundation-model/*
       Events:
