@@ -62,7 +62,12 @@ Resources:
       CodeUri: src/
       Handler: backend.lambda_handler
       Policies:
-        - AWSLambdaBasicExecutionRole
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock: InvokeModel
+              Resource:
+                - !Sub arn:aws:bedrock:${AWS::Region}::foundation-model/*
       Events:
         SendMessage:
           Type: Api
