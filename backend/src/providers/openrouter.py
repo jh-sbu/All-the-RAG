@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Iterable
 from dotenv import load_dotenv
@@ -33,16 +34,22 @@ class OpenRouter(Provider):
     def __init__(
         self,
         system_prompt: str = "You are a helpful assistant, who helps users with problems related to the game Minecraft",
+        log_level: int = logging.INFO,
     ) -> None:
         super().__init__()
         load_dotenv()
+
+        self.model = get_model_name()
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(log_level)
+
         self.client = get_client()
+
+        self.logger.debug(f"Provider client: {self.client}")
         self._system_prompt: ChatCompletionMessageParam = {
             "role": "system",
             "content": system_prompt,
         }
-
-        self.model = get_model_name()
 
     def request(self, contexts: list[str], messages: list[dict[str, str]]) -> Response:
         chat_messages: Iterable[ChatCompletionMessageParam] = []

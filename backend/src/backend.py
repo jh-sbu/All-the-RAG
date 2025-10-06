@@ -66,7 +66,7 @@ if completion_provider is None:
 elif completion_provider == "Local":
     provider = Llama(system_prompt=system_prompt)
 elif completion_provider == "OpenRouter":
-    provider = OpenRouter(system_prompt=system_prompt)
+    provider = OpenRouter(system_prompt=system_prompt, log_level=log_level)
 else:
     raise ValueError("Specified completion provider is not supported")
 
