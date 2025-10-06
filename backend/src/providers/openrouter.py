@@ -85,6 +85,7 @@ class OpenRouter(Provider):
             chat_messages.append(new_message)
 
         def generate():
+            yield f"event: update_sources\ndata: {json.dumps({'sources': [{'title': 'Not provided', 'summary': 'No summary', 'url': 'Also not provided'}]})}\n\n"
             response = self.client.chat.completions.create(
                 messages=chat_messages,
                 model=self.model,
@@ -95,8 +96,9 @@ class OpenRouter(Provider):
 
             for chunk in response:
                 content = chunk.choices[0].delta.content
+                self.logger.debug(f"New content: {content}")
                 if content != "":
-                    yield f"data: {json.dumps({'event': 'new_chunk', 'content': content})}\n\n"
+                    yield f"event: new_chunk\ndata: {json.dumps({'content': content})}\n\n"
 
         return Response(
             generate(),

@@ -4,20 +4,21 @@ import Chatbot from './Components/Chatbot';
 import PreviousChatsSidebar from './Components/PreviousChatsSidebar';
 import SourcesSidebar from './Components/SourcesSidebar';
 import { IChatSession } from './Models/ChatSession';
+import { ISource } from './Models/Source';
 
 const App: React.FC = () => {
-  const [sources, _setSources] = useState([
+  const [sources, setSources] = useState<ISource[]>([
     {
       number: 1,
       title: "Source Title 1",
       summary: "Brief summary of source 1.",
-      website: "https://source1.com"
+      url: "https://source1.com"
     },
     {
       number: 2,
       title: "Source Title 2",
       summary: "Brief summary of source 2.",
-      website: "https://source2.com"
+      url: "https://source2.com"
     }
   ]);
 
@@ -36,7 +37,7 @@ const App: React.FC = () => {
     <div className="container">
       <PreviousChatsSidebar chats={chats} />
       <div className="main-content">
-        <Chatbot />
+        <Chatbot onUpdateSources={setSources} />
       </div>
       <SourcesSidebar sources={sources} />
     </div>

@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import { IMessage } from '../Models/Message';
+import { ISource } from '../Models/Source';
 import './Chatbot.css';
 
-function Chatbot() {
+interface ChatbotProps {
+  onUpdateSources: (sources: ISource[]) => void;
+}
+
+function Chatbot({ onUpdateSources }: ChatbotProps) {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -42,39 +47,64 @@ function Chatbot() {
         const reader = response.body?.getReader();
         if (!reader) throw new Error('No response body');
 
+        let buffer = '';
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const chunk = new TextDecoder().decode(value);
-          // Process each data line in the chunk
-          const lines = chunk.split('\n');
-          let contentAccumulator = '';
+          buffer += new TextDecoder().decode(value);
+          console.log(`Buffer: ${buffer}`);
+          const lines = buffer.split('\n');
 
-          lines.forEach(line => {
-            if (line.startsWith('data: ')) {
+          // Keep the last incomplete line in the buffer
+          buffer = lines.pop() || '';
+
+          let currentEvent = '';
+          let currentData = '';
+
+          for (const line of lines) {
+            if (line.startsWith('event: ')) {
+              currentEvent = line.slice(7).trim();
+            } else if (line.startsWith('data: ')) {
+              currentData = line.slice(6).trim();
+            } else if (line === '' && currentEvent && currentData) {
+              // End of SSE message, process it
               try {
-                const json = JSON.parse(line.slice(6).trim());
-                if (json.content) {
-                  contentAccumulator += json.content;
+                const json = JSON.parse(currentData);
+
+                if (currentEvent === 'new_chunk') {
+                  if (json.content) {
+                    setMessages(prev => {
+                      const lastMessage = prev[prev.length - 1];
+                      if (lastMessage.sender === 'assistant') {
+                        return [
+                          ...prev.slice(0, -1),
+                          { ...lastMessage, text: lastMessage.text + json.content }
+                        ];
+                      }
+                      return prev;
+                    });
+                  }
+                } else if (currentEvent === 'update_sources') {
+                  console.log(`Got a source update: ${currentData}`);
+                  if (json.sources && Array.isArray(json.sources)) {
+                    const newSources: ISource[] = json.sources.map((source: any, index: number) => ({
+                      number: index + 1,
+                      title: source.title || '',
+                      summary: source.summary || '',
+                      url: source.url || ''
+                    }));
+                    onUpdateSources(newSources);
+                  }
                 }
               } catch (e) {
-                console.error('Error parsing JSON:', e);
+                console.error('Error parsing SSE data:', e);
               }
-            }
-          });
 
-          if (contentAccumulator) {
-            setMessages(prev => {
-              const lastMessage = prev[prev.length - 1];
-              if (lastMessage.sender === 'assistant') {
-                return [
-                  ...prev.slice(0, -1),
-                  { ...lastMessage, text: lastMessage.text + contentAccumulator }
-                ];
-              }
-              return prev;
-            });
+              // Reset for next event
+              currentEvent = '';
+              currentData = '';
+            }
           }
         }
       })

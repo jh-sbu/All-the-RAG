@@ -1,16 +1,17 @@
 import React from 'react';
 import SourceCard from './SourceCard';
 import './SourcesSidebar.css';
+import { ISource } from '../Models/Source';
 
-interface Source {
-  number: number;
-  title: string;
-  summary: string;
-  website: string;
-}
+// interface Source {
+//   number: number;
+//   title: string;
+//   summary: string;
+//   url: string;
+// }
 
 interface SourcesSidebarProps {
-  sources: Source[];
+  sources: ISource[];
 }
 
 const SourcesSidebar: React.FC<SourcesSidebarProps> = ({ sources }) => {
@@ -23,7 +24,7 @@ const SourcesSidebar: React.FC<SourcesSidebarProps> = ({ sources }) => {
           number={source.number}
           title={source.title}
           summary={source.summary}
-          website={source.website}
+          url={source.url}
         />
       ))}
     </div>
