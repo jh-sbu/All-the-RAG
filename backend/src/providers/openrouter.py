@@ -52,6 +52,9 @@ class OpenRouter(Provider):
         }
 
     def request(self, contexts: list[str], messages: list[dict[str, str]]) -> Response:
+        self.logger.debug(
+            f"Received request with {len(contexts)} contexts and {len(messages)} messages"
+        )
         chat_messages: Iterable[ChatCompletionMessageParam] = []
 
         chat_messages.append(self._system_prompt)
@@ -89,9 +92,18 @@ class OpenRouter(Provider):
 
             for chunk in response:
                 content = chunk.choices[0].delta.content
-                yield f"data: {json.dumps({'content': content})}\n\n"
+                if content != "":
+                    yield f"data: {json.dumps({'event': 'new_token', 'content': content})}\n\n"
 
-        return Response(generate(), mimetype="text/event-stream")
+        return Response(
+            generate(),
+            mimetype="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            },
+        )
 
     def system_prompt(self, prompt: str) -> None:
         self._system_prompt: ChatCompletionMessageParam = {
