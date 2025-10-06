@@ -85,7 +85,11 @@ class OpenRouter(Provider):
             chat_messages.append(new_message)
 
         def generate():
-            yield f"event: update_sources\ndata: {json.dumps({'sources': [{'title': 'Not provided', 'summary': 'No summary', 'url': 'Also not provided'}]})}\n\n"
+            source_list = [
+                {"title": "Not provided", "summary": "No summary", "url": context.url}
+                for context in contexts
+            ]
+            yield f"event: update_sources\ndata: {json.dumps({'sources': source_list})}\n\n"
             response = self.client.chat.completions.create(
                 messages=chat_messages,
                 model=self.model,
