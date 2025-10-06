@@ -1,5 +1,5 @@
 import os
-from typing import Iterable
+from typing import Generator, Iterable
 from dotenv import load_dotenv
 from flask import Response, json
 from openai.types.chat import ChatCompletionMessageParam
@@ -42,7 +42,7 @@ class Llama(Provider):
 
     def request(
         self, contexts: list[Context], messages: list[dict[str, str]]
-    ) -> Response:
+    ) -> Generator:
         chat_messages: Iterable[ChatCompletionMessageParam] = []
 
         chat_messages.append(self._system_prompt)
@@ -75,7 +75,8 @@ class Llama(Provider):
                 content = chunk.choices[0].delta.content
                 yield f"data: {json.dumps({'content': content})}\n\n"
 
-        return Response(generate(), mimetype="text/event-stream")
+        # return Response(generate(), mimetype="text/event-stream")
+        return generate()
 
     def system_prompt(self, prompt: str) -> None:
         self._system_prompt: ChatCompletionMessageParam = {

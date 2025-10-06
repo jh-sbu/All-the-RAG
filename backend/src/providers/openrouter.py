@@ -1,8 +1,8 @@
 import logging
 import os
-from typing import Iterable
+from typing import Generator, Iterable
 from dotenv import load_dotenv
-from flask import Response, json
+from flask import Response, json, stream_with_context
 import openai
 from openai.types.chat import ChatCompletionMessageParam
 
@@ -54,7 +54,7 @@ class OpenRouter(Provider):
 
     def request(
         self, contexts: list[Context], messages: list[dict[str, str]]
-    ) -> Response:
+    ) -> Generator:
         self.logger.debug(
             f"Received request with {len(contexts)} contexts and {len(messages)} messages"
         )
@@ -84,12 +84,17 @@ class OpenRouter(Provider):
 
             chat_messages.append(new_message)
 
+        self.logger.debug("Finished preparing request to provider")
+
         def generate():
             source_list = [
                 {"title": "Not provided", "summary": "No summary", "url": context.url}
                 for context in contexts
             ]
+            self.logger.debug(f"Source list with {len(source_list)} items prepared")
             yield f"event: update_sources\ndata: {json.dumps({'sources': source_list})}\n\n"
+            self.logger.debug("Yielded sources")
+
             response = self.client.chat.completions.create(
                 messages=chat_messages,
                 model=self.model,
@@ -101,18 +106,10 @@ class OpenRouter(Provider):
             for chunk in response:
                 content = chunk.choices[0].delta.content
                 self.logger.debug(f"New content: {content}")
-                if content != "":
-                    yield f"event: new_chunk\ndata: {json.dumps({'content': content})}\n\n"
+                # if content != "":
+                yield f"event: new_chunk\ndata: {json.dumps({'content': content})}\n\n"
 
-        return Response(
-            generate(),
-            mimetype="text/event-stream",
-            headers={
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "X-Accel-Buffering": "no",
-            },
-        )
+        return generate()
 
     def system_prompt(self, prompt: str) -> None:
         self._system_prompt: ChatCompletionMessageParam = {

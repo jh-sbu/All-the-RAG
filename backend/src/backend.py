@@ -1,7 +1,9 @@
-from flask import Flask, jsonify, request
+from flask import Flask, Response, jsonify, request, stream_with_context
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
+
+from httpx import head
 from vdb.amazons3vector import AmazonS3Vector
 from vdb.faiss import FaissIndex
 from providers.openrouter import OpenRouter
@@ -114,7 +116,13 @@ def send_message():
                 logger.debug(f"Received context: {context}")
 
             logger.debug("Querying provider")
-            return provider.request(contexts, data["messages"])
+            provide_res = provider.request(contexts, data["messages"])
+
+            return Response(
+                stream_with_context(provide_res),
+                mimetype="text/event-stream",
+                headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
+            )
 
         except Exception as e:
             logger.error(f"Error in chat stream: {str(e)}")
