@@ -1,3 +1,4 @@
+from models.context import Context
 from vdb.vdb import VDB
 
 
@@ -8,7 +9,8 @@ class FaissIndex(VDB):
     has been fully completed.
     """
 
-    def get_nearest(self, k: int, query: str):
+    def get_nearest(self, k: int, query: str) -> list[Context]:
+        raise NotImplementedError
         return [
             "Test sentence please ignore",
             "Another Test, also ignore",

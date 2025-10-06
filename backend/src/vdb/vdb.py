@@ -1,9 +1,11 @@
 import abc
 
+from models.context import Context
+
 
 class VDB(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def get_nearest(self, k: int, query: str) -> list[str]:
+    def get_nearest(self, k: int, query: str) -> list[Context]:
         """
         Get the k nearest matches for query stored in the vector DB
         """

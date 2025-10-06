@@ -3,6 +3,7 @@ from typing import Iterable
 from dotenv import load_dotenv
 from flask import Response, json
 from openai.types.chat import ChatCompletionMessageParam
+from models.context import Context
 from providers.provider import Provider
 import openai
 
@@ -39,7 +40,9 @@ class Llama(Provider):
 
         self.model = get_model_name()
 
-    def request(self, messages: list[dict[str, str]]) -> Response:
+    def request(
+        self, contexts: list[Context], messages: list[dict[str, str]]
+    ) -> Response:
         chat_messages: Iterable[ChatCompletionMessageParam] = []
 
         chat_messages.append(self._system_prompt)

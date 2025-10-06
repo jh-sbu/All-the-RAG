@@ -2,10 +2,14 @@ import abc
 
 from flask import Response
 
+from models.context import Context
+
 
 class Provider(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def request(self, contexts: list[str], messages: list[dict[str, str]]) -> Response:
+    def request(
+        self, contexts: list[Context], messages: list[dict[str, str]]
+    ) -> Response:
         """
         Send a request to whatever provider is configured by the environment and
         stream back the results

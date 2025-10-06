@@ -6,6 +6,7 @@ from flask import Response, json
 import openai
 from openai.types.chat import ChatCompletionMessageParam
 
+from models.context import Context
 from providers.provider import Provider
 
 
@@ -51,7 +52,9 @@ class OpenRouter(Provider):
             "content": system_prompt,
         }
 
-    def request(self, contexts: list[str], messages: list[dict[str, str]]) -> Response:
+    def request(
+        self, contexts: list[Context], messages: list[dict[str, str]]
+    ) -> Response:
         self.logger.debug(
             f"Received request with {len(contexts)} contexts and {len(messages)} messages"
         )
@@ -62,7 +65,7 @@ class OpenRouter(Provider):
         for context in contexts:
             new_message: ChatCompletionMessageParam = {
                 "role": "user",
-                "content": "Context: " + context,
+                "content": "Context: " + context.content,
             }
             chat_messages.append(new_message)
 
@@ -93,7 +96,7 @@ class OpenRouter(Provider):
             for chunk in response:
                 content = chunk.choices[0].delta.content
                 if content != "":
-                    yield f"data: {json.dumps({'event': 'new_token', 'content': content})}\n\n"
+                    yield f"data: {json.dumps({'event': 'new_chunk', 'content': content})}\n\n"
 
         return Response(
             generate(),

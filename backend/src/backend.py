@@ -9,11 +9,10 @@ from providers.llama_server import Llama
 import logging
 import awsgi
 
+
 backend = Flask(__name__)
 
 load_dotenv()
-
-# raise Exception(os.environ.keys())
 
 log_level = os.environ.get("LOG_LEVEL")
 print(f"Log level: {log_level}")

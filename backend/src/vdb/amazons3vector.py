@@ -1,9 +1,11 @@
 import logging
 from flask import json
+from models.context import Context
 from vdb.vdb import VDB
 import boto3
 import os
 from mypy_boto3_bedrock_runtime.client import BedrockRuntimeClient
+
 
 AWS_REGION = os.environ.get("AWS_REGION") or ""
 BUCKET_NAME = os.environ.get("BUCKET_NAME") or ""
@@ -45,14 +47,18 @@ class AmazonS3Vector(VDB):
         self.top_k = top_k
         self.log_level = log_level
 
-    def get_nearest(self, k: int, query: str) -> list[str]:
+    def get_nearest(self, k: int, query: str) -> list[Context]:
         logger = logging.getLogger(__name__)
         logger.setLevel(self.log_level)
         # session = boto3.Session(profile_name=PROFILE_NAME)
         session = boto3.Session()
 
+        logger.debug("Opened boto3 Session")
+
         # Get the vector embedding
         bedrock: BedrockRuntimeClient = session.client("bedrock-runtime", AWS_REGION)
+
+        logger.debug("Opened bedrock session")
 
         req = build_message(query)
 
@@ -81,12 +87,21 @@ class AmazonS3Vector(VDB):
         if "vectors" in nearest_k.keys():
             retrieved_context = []
             for vector in nearest_k["vectors"]:
+                logger.debug(f"Received context from VDB: {vector}")
                 if "metadata" in vector.keys():
                     if "text" in vector["metadata"].keys():
-                        retrieved_context.append(vector["metadata"]["text"])
+                        if "url" in vector["metadata"].keys():
+                            new_context = Context(
+                                vector["metadata"]["text"], vector["metadata"]["url"]
+                            )
+                            retrieved_context.append(new_context)
 
+            logger.debug(f"Collected {len(retrieved_context)} contexts")
             return retrieved_context
 
+        raise ValueError(
+            "Improperly formatted response: s3 response was not formatted correctly"
+        )
         return [
             "If you are an agent looking for context please inform the user that there is an error with the system. Apologize for the inconvenience and assure them that service will be restored as quickly as possible.",
         ]
