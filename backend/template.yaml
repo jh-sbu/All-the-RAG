@@ -52,7 +52,7 @@ Resources:
   ApiGateway:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: Prod
+      StageName: !Sub ${StageName}
       EndpointConfiguration: REGIONAL
       Cors:
         AllowMethods: "'GET,POST,OPTIONS'"
@@ -161,11 +161,47 @@ Resources:
     MetaData:
       BuildMethod: python3.12
 
+  ATRRedirect:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Sub ${StageName}
+      DefinitionBody:
+        swagger: "2.0"
+        info:
+          title: "Redirect to Streaming Lambda url"
+          version: "1.0"
+        basePath: "/"
+        schemes:
+          - https
+        paths:
+          /send_message:
+            post:
+              produces:
+                - text/event-stream
+              responses:
+                "302":
+                  description: "Redirect"
+                  headers:
+                    Location:
+                      type: "string"
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  # text/event-stream: '{"statusCode": 302}'
+                  application/json: '{"statusCode": 302}'
+                responses:
+                  default:
+                    statusCode: "302"
+                    responseParameters:
+                      method.response.header.Location:
+                        Fn::Sub: "'${ATRStreamFunctionUrl.FunctionUrl}'"
+                passthroughBehavior: "when_no_match"
+
 Outputs:
   ATRStreamFunctionArn:
     Value: !GetAtt ATRStreamFunction.Arn
   ATRStreamFunctionUrl:
-    Value: GetAtt ATRStreamFunctionUrl.FunctionUrl
+    Value: !GetAtt ATRStreamFunctionUrl.FunctionUrl
     Description: Public Function url with response streaming enabled
   ApiUrl:
     Description: Base URL for the API Gateway stage.
