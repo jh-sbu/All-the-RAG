@@ -3,7 +3,6 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 
-from httpx import head
 from vdb.amazons3vector import AmazonS3Vector
 from vdb.faiss import FaissIndex
 from providers.openrouter import OpenRouter

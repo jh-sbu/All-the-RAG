@@ -84,7 +84,7 @@ Resources:
         Cors:
           AllowOrigins: ["*"]
           AllowHeaders: ["*"]
-          AllowMethods: ["POST"]
+          AllowMethods: ["*"]
       Environment:
         Variables:
           API_KEY: ""
@@ -164,6 +164,10 @@ Resources:
   ATRRedirect:
     Type: AWS::Serverless::Api
     Properties:
+      Cors:
+        AllowOrigin: ["*"]
+        AllowHeaders: ["*"]
+        AllowMethods: ["*"]
       StageName: !Sub ${StageName}
       DefinitionBody:
         swagger: "2.0"
