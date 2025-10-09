@@ -131,13 +131,13 @@ Resources:
           Properties:
             RestApiId: !Ref ApiGateway
             Path: /register
-            Method: GET
+            Method: POST
         Login:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGateway
             Path: /login
-            Method: GET
+            Method: POST
         PastChats:
           Type: Api
           Properties:
