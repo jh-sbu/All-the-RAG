@@ -63,7 +63,9 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/
-      Handler: backend.lambda_handler
+      Handler: backend.backend
+      Layers:
+        - !Sub arn:aws:lambda:${AWS::Region}:753240598075:layer:LambdaAdapterLayerX86:25
       Policies:
         - Statement:
             - Effect: Allow
@@ -87,6 +89,11 @@ Resources:
           AllowMethods: ["*"]
       Environment:
         Variables:
+          AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap
+          PORT: "8080"
+          READINESS_CHECK_PORT: "8080"
+          READINESS_CHECK_PATH: /example_page
+          AWS_LWA_INVOKE_MODE: RESPONSE_STREAM
           API_KEY: ""
           BASE_URL: !Ref BaseUrl
           BUCKET_NAME: !Ref BucketName
@@ -104,7 +111,9 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/
-      Handler: backend.lambda_handler
+      Handler: backend.backend
+      Layers:
+        - !Sub arn:aws:lambda:${AWS::Region}:753240598075:layer:LambdaAdapterLayerX86:25
       Policies:
         - Statement:
             - Effect: Allow
@@ -146,6 +155,10 @@ Resources:
             Method: GET
       Environment:
         Variables:
+          AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap
+          PORT: "8080"
+          READINESS_CHECK_PORT: "8080"
+          READINESS_CHECK_PATH: /example_page
           API_KEY: ""
           BASE_URL: !Ref BaseUrl
           BUCKET_NAME: !Ref BucketName
