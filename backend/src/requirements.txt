@@ -1,6 +1,5 @@
 annotated-types==0.7.0
 anyio==4.10.0
-aws-wsgi==0.2.7
 blinker==1.9.0
 boto3==1.40.30
 boto3-stubs==1.40.30

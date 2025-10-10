@@ -8,7 +8,6 @@ from vdb.faiss import FaissIndex
 from providers.openrouter import OpenRouter
 from providers.llama_server import Llama
 import logging
-import awsgi
 
 
 backend = Flask(__name__)
@@ -134,11 +133,12 @@ def get_example():
 
 
 # print(__name__)
-# if __name__ == "__main__":
-#     app.run()
+if __name__ == "__main__":
+    # app.run()
+    backend.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
 
 
-def lambda_handler(event, context):
-    print(f"Received event: {event}")
-    print(f"Received context: {context}")
-    return awsgi.response(backend, event, context)
+# def lambda_handler(event, context):
+#     print(f"Received event: {event}")
+#     print(f"Received context: {context}")
+#     return awsgi.response(backend, event, context)

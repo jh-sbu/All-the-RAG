@@ -224,4 +224,4 @@ Outputs:
     Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/chat_history"
   SendMessageUrl:
     Description: POST /send_message endpoint
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/send_message"
+    Value: !Sub "https://${ATRRedirect}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/send_message"
