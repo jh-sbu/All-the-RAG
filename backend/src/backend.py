@@ -139,4 +139,6 @@ def get_example():
 
 
 def lambda_handler(event, context):
+    print(f"Received event: {event}")
+    print(f"Received context: {context}")
     return awsgi.response(backend, event, context)

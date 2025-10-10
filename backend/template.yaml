@@ -183,7 +183,7 @@ Resources:
               produces:
                 - text/event-stream
               responses:
-                "302":
+                "308":
                   description: "Redirect"
                   headers:
                     Location:
@@ -191,11 +191,11 @@ Resources:
               x-amazon-apigateway-integration:
                 type: mock
                 requestTemplates:
-                  # text/event-stream: '{"statusCode": 302}'
-                  application/json: '{"statusCode": 302}'
+                  # text/event-stream: '{"statusCode": 308}'
+                  application/json: '{"statusCode": 308}'
                 responses:
                   default:
-                    statusCode: "302"
+                    statusCode: "308"
                     responseParameters:
                       method.response.header.Location:
                         Fn::Sub: "'${ATRStreamFunctionUrl.FunctionUrl}'"
