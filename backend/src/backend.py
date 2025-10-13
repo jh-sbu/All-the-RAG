@@ -127,15 +127,22 @@ def send_message():
             return jsonify({"error": "Error reaching chatbot"}), 500
 
 
-@backend.route("/example_page", methods=["GET"])
-def get_example():
-    return jsonify({"key": "value"}), 200
+@backend.route("/health_check", methods=["GET"])
+def health_check():
+    # return jsonify({"key": "value"}), 200
+    return "ok", 200
+
+
+@backend.route("/", methods=["GET", "POST"])
+@backend.route("/<path:path>")
+def root():
+    return "ok", 200
 
 
 # print(__name__)
-if __name__ == "__main__":
-    # app.run()
-    backend.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+# if __name__ == "__main__":
+#     # app.run()
+#     backend.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
 
 
 # def lambda_handler(event, context):

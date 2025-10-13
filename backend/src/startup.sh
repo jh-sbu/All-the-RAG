@@ -2,11 +2,15 @@
 # startup.sh
 # exec gunicorn --bind 0.0.0.0:8080 --workers 1 --threads 8 backend:backend
 # echo $PATH
-# echo $LAMBDA_TASK_ROOT
 # ls $LAMBDA_TASK_ROOT
 # PATH=$PATH:$LAMBDA_TASK_ROOT/bin PYTHONPATH=$LAMBDA_TASK_ROOT which gunicorn
 # PATH=$PATH:$LAMBDA_TASK_ROOT/bin PYTHONPATH=$LAMBDA_TASK_ROOT which python
-# PATH=$PATH:$LAMBDA_TASK_ROOT/bin PYTHONPATH=$LAMBDA_TASK_ROOT exec python -m gunicorn backend:backend --bind 0.0.0.0:${PORT:-8080} --workers 1 --threads 8
+export RUST_BACKTRACE=1
+PATH=$PATH:$LAMBDA_TASK_ROOT/bin PYTHONPATH=$PYTHONPATH:/opt/python:$LAMBDA_RUNTIME_DIR exec python -m gunicorn backend:backend --bind 0.0.0.0:${PORT:-3459} --workers 1 --threads 8
+# PATH=$PATH:$LAMBDA_TASK_ROOT/bin PYTHONPATH=$PYTHONPATH:/opt/python:$LAMBDA_RUNTIME_DIR exec python -c 'print("Hello World!")'
+# echo $LAMBDA_TASK_ROOT
+# echo $PYTHONPATH
+# echo $LAMBDA_RUNTIME_DIR
 # echo "It's updating"
 # echo "Should get here"
 # python -c 'print("Hello World!")'
@@ -17,4 +21,4 @@
 # python test.py
 # python -c 'print("Goodbye, World!")'
 # echo "Florb"
-exec python -m gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 1 --threads 8 backend:backend
+# exec python -m gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 1 --threads 8 backend:backend

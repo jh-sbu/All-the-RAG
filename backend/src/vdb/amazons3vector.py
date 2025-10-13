@@ -26,7 +26,7 @@ if PROFILE_NAME == "":
     raise RuntimeError("Could not find PROFILE_NAME environmental variable")
 
 if AWS_REGION == "":
-    raise RuntimeError("Could not find PROFILE_REGION environmental variable")
+    raise RuntimeError("Could not find AWS_REGION environmental variable")
 
 
 def build_message(text: str) -> dict:
