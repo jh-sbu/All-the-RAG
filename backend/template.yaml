@@ -158,7 +158,7 @@ Resources:
           AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap
           PORT: "8080"
           READINESS_CHECK_PORT: "8080"
-          READINESS_CHECK_PATH: /example_page
+          READINESS_CHECK_PATH: /health_check
           API_KEY: ""
           BASE_URL: !Ref BaseUrl
           BUCKET_NAME: !Ref BucketName
