@@ -50,14 +50,19 @@ Globals:
 
 Resources:
   ApiGateway:
-    Type: AWS::Serverless::Api
+    Type: AWS::Serverless::HttpApi
     Properties:
       StageName: !Sub ${StageName}
-      EndpointConfiguration: REGIONAL
-      Cors:
-        AllowMethods: "'GET,POST,OPTIONS'"
-        AllowHeaders: "'Content-Type,Authorization'"
-        AllowOrigin: "'*'"
+      # EndpointConfiguration: REGIONAL
+      # Cors:
+      #   AllowMethods: "'GET,POST,OPTIONS'"
+      #   AllowHeaders: "'Content-Type,Authorization'"
+      #   AllowOrigin: "'*'"
+      CorsConfiguration:
+        AllowOrigins:
+          - "'*'"
+        AllowHeaders:
+          - "'*'"
 
   ATRStreamFunction:
     Type: AWS::Serverless::Function
@@ -130,35 +135,35 @@ Resources:
 
       Events:
         GetHistory:
-          Type: Api
+          Type: HttpApi
           Properties:
-            RestApiId: !Ref ApiGateway
+            # RestApiId: !Ref ApiGateway
             Path: /chat_history
             Method: GET
         Register:
-          Type: Api
+          Type: HttpApi
           Properties:
-            RestApiId: !Ref ApiGateway
+            # RestApiId: !Ref ApiGateway
             Path: /register
             Method: POST
         Login:
-          Type: Api
+          Type: HttpApi
           Properties:
-            RestApiId: !Ref ApiGateway
+            # RestApiId: !Ref ApiGateway
             Path: /login
             Method: POST
         PastChats:
-          Type: Api
+          Type: HttpApi
           Properties:
-            RestApiId: !Ref ApiGateway
+            # RestApiId: !Ref ApiGateway
             Path: /past_chats
             Method: GET
       Environment:
         Variables:
           AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap
           PORT: "8080"
-          READINESS_CHECK_PORT: "8080"
-          READINESS_CHECK_PATH: /health_check
+          AWS_LWA_READINESS_CHECK_PORT: "8080"
+          AWS_LWA_READINESS_CHECK_PATH: /health_check
           API_KEY: ""
           BASE_URL: !Ref BaseUrl
           BUCKET_NAME: !Ref BucketName
