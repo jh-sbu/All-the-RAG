@@ -85,7 +85,7 @@ def login():
 @backend.route("/past_chats", methods=["GET"])
 def get_histories():
     # return not_implemented_error
-    return jsonify({"error": "Not implemented yet"})
+    return jsonify({"error": "Not implemented yet"}), 405
 
 
 @backend.route("/chat_history", methods=["GET"])
