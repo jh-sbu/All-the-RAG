@@ -95,8 +95,8 @@ Resources:
       Environment:
         Variables:
           AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap
-          PORT: "8080"
-          READINESS_CHECK_PORT: "8080"
+          PORT: "3459"
+          READINESS_CHECK_PORT: "3459"
           READINESS_CHECK_PATH: /example_page
           AWS_LWA_INVOKE_MODE: RESPONSE_STREAM
           API_KEY: ""
@@ -161,9 +161,11 @@ Resources:
       Environment:
         Variables:
           AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap
-          PORT: "8080"
-          AWS_LWA_READINESS_CHECK_PORT: "8080"
+          PORT: "3459"
+          AWS_LWA_READINESS_CHECK_PORT: "3459"
           AWS_LWA_READINESS_CHECK_PATH: /health_check
+          AWS_LWA_READ_TIMEOUTE: "10"
+          AWS_LWA_WRITE_TIMEOUTE: "10"
           API_KEY: ""
           BASE_URL: !Ref BaseUrl
           BUCKET_NAME: !Ref BucketName
