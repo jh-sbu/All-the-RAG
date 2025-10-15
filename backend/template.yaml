@@ -36,6 +36,9 @@ Parameters:
   ProfileRegion:
     Type: String
     Description: AWS Region
+  FrontendURL:
+    Type: String
+    Description: URL for the frontend, used for CORS
 
 Globals:
   Function:
@@ -59,8 +62,9 @@ Resources:
       #   AllowHeaders: "'Content-Type,Authorization'"
       #   AllowOrigin: "'*'"
       CorsConfiguration:
+        AllowCredentials: false
         AllowOrigins:
-          - "'*'"
+          - !Sub "'${FrontendURL}'"
         AllowHeaders:
           - "'*'"
 
@@ -89,7 +93,8 @@ Resources:
         AuthType: NONE
         InvokeMode: RESPONSE_STREAM
         Cors:
-          AllowOrigins: ["*"]
+          AllowCredentials: false
+          AllowOrigins: !Sub ["${FrontendURL}"]
           AllowHeaders: ["*"]
           AllowMethods: ["*"]
       Environment:
@@ -182,12 +187,19 @@ Resources:
       BuildMethod: python3.12
 
   ATRRedirect:
-    Type: AWS::Serverless::Api
+    Type: AWS::Serverless::HttpApi
     Properties:
-      Cors:
-        AllowOrigin: ["*"]
-        AllowHeaders: ["*"]
-        AllowMethods: ["*"]
+      CorsConfiguration:
+        AllowCredentials: false
+        AllowOrigins:
+          - !Sub "'${FrontendURL}'"
+        AllowHeaders:
+          - "'*'"
+      # Cors:
+      #   AllowCredentials: false
+      #   AllowOrigin: ["*"]
+      #   AllowHeaders: ["*"]
+      #   AllowMethods: ["*"]
       StageName: !Sub ${StageName}
       DefinitionBody:
         swagger: "2.0"
