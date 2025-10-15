@@ -164,6 +164,11 @@ Resources:
             # RestApiId: !Ref ApiGateway
             Path: /past_chats
             Method: GET
+        HealthCheck:
+          Type: HttpApi
+          Properties:
+            Path: /health_check
+            Method: GET
       Environment:
         Variables:
           AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap
