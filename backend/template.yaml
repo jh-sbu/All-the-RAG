@@ -64,9 +64,9 @@ Resources:
       CorsConfiguration:
         AllowCredentials: false
         AllowOrigins:
-          - !Sub "'${FrontendURL}'"
+          - !Sub ${FrontendURL}
         AllowHeaders:
-          - "'*'"
+          - "*"
 
   ATRStreamFunction:
     Type: AWS::Serverless::Function
@@ -94,7 +94,8 @@ Resources:
         InvokeMode: RESPONSE_STREAM
         Cors:
           AllowCredentials: false
-          AllowOrigins: !Sub ["${FrontendURL}"]
+          AllowOrigins:
+            - !Sub ${FrontendURL}
           AllowHeaders: ["*"]
           AllowMethods: ["*"]
       Environment:
@@ -192,9 +193,9 @@ Resources:
       CorsConfiguration:
         AllowCredentials: false
         AllowOrigins:
-          - !Sub "'${FrontendURL}'"
+          - !Sub ${FrontendURL}
         AllowHeaders:
-          - "'*'"
+          - "*"
       # Cors:
       #   AllowCredentials: false
       #   AllowOrigin: ["*"]
@@ -202,24 +203,24 @@ Resources:
       #   AllowMethods: ["*"]
       StageName: !Sub ${StageName}
       DefinitionBody:
-        swagger: "2.0"
+        openapi: "3.0.3"
         info:
           title: "Redirect to Streaming Lambda url"
           version: "1.0"
-        basePath: "/"
-        schemes:
-          - https
         paths:
           /send_message:
             post:
-              produces:
-                - text/event-stream
               responses:
                 "308":
                   description: "Redirect"
                   headers:
                     Location:
-                      type: "string"
+                      schema:
+                        type: "string"
+                  content:
+                    text/event-stream:
+                      schema:
+                        type: string
               x-amazon-apigateway-integration:
                 type: mock
                 requestTemplates:
