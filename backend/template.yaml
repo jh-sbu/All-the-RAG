@@ -102,7 +102,8 @@ Resources:
         Variables:
           AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap
           PORT: "3459"
-          READINESS_CHECK_PORT: "3459"
+          AWS_LWA_READINESS_CHECK_PATH: /health_check
+          AWS_LWA_READINESS_CHECK_PORT: "3459"
           READINESS_CHECK_PATH: /example_page
           AWS_LWA_INVOKE_MODE: RESPONSE_STREAM
           API_KEY: ""

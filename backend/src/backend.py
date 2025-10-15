@@ -133,10 +133,10 @@ def health_check():
     return "ok", 200
 
 
-@backend.route("/", methods=["GET", "POST"])
-@backend.route("/<path:path>")
-def root():
-    return "ok", 200
+# @backend.route("/", methods=["GET", "POST"])
+# @backend.route("/<path:path>")
+# def root():
+#     return "ok", 200
 
 
 # print(__name__)
