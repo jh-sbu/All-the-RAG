@@ -4,6 +4,47 @@
   flex-direction: column;
 }
 
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.header h2 {
+  margin: 0;
+}
+
+.health-check-btn {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.health-check-btn.idle {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.health-check-btn.idle:hover {
+  background-color: #e0e0e0;
+}
+
+.health-check-btn.success {
+  background-color: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+.health-check-btn.error {
+  background-color: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
 .chat-window {
   border: 1px solid #ccc;
   padding: 10px;

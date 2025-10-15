@@ -11,6 +11,27 @@ function Chatbot({ onUpdateSources }: ChatbotProps) {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [healthStatus, setHealthStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const checkHealth = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URI}/health_check`, {
+        method: 'GET',
+      });
+
+      if (response.ok) {
+        setHealthStatus('success');
+      } else {
+        setHealthStatus('error');
+      }
+    } catch (error) {
+      console.error('Health check failed:', error);
+      setHealthStatus('error');
+    }
+
+    // Reset status after 2 seconds
+    setTimeout(() => setHealthStatus('idle'), 2000);
+  };
 
   const sendMessage = () => {
     if (!userInput.trim() || isLoading) return;
@@ -126,7 +147,17 @@ function Chatbot({ onUpdateSources }: ChatbotProps) {
 
   return (
     <div className="chatbot">
-      <h2>All the RAG</h2>
+      <div className="header">
+        <h2>All the RAG</h2>
+        <button
+          className={`health-check-btn ${healthStatus}`}
+          onClick={checkHealth}
+        >
+          {healthStatus === 'idle' && 'Test'}
+          {healthStatus === 'success' && '✓ Success'}
+          {healthStatus === 'error' && '✗ Error'}
+        </button>
+      </div>
       <div className="chat-window">
         {messages.map((msg, index) => (
           <div key={index} className={`message ${msg.sender}`}>
