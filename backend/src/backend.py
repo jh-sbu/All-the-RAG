@@ -40,7 +40,12 @@ backend.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 if not backend.config["SECRET_KEY"]:
     raise ValueError("Could not initialize SECRET_KEY for flask")
 
-CORS(backend)
+
+# Some hosts, e.g. AWS lambda urls, do CORS themselves; turn on/off
+# flask's own cors depending on whether it is needed or not
+use_cors = os.environ.get("USE_CORS", None)
+if use_cors is not None:
+    CORS(backend)
 
 vdb_provider = os.environ.get("VDB")
 

@@ -193,52 +193,52 @@ Resources:
     MetaData:
       BuildMethod: python3.12
 
-  ATRRedirect:
-    Type: AWS::Serverless::HttpApi
-    Properties:
-      CorsConfiguration:
-        AllowCredentials: false
-        AllowOrigins:
-          - !Sub ${FrontendURL}
-        AllowHeaders:
-          - "*"
-      # Cors:
-      #   AllowCredentials: false
-      #   AllowOrigin: ["*"]
-      #   AllowHeaders: ["*"]
-      #   AllowMethods: ["*"]
-      StageName: !Sub ${StageName}
-      DefinitionBody:
-        openapi: "3.0.3"
-        info:
-          title: "Redirect to Streaming Lambda url"
-          version: "1.0"
-        paths:
-          /send_message:
-            post:
-              responses:
-                "308":
-                  description: "Redirect"
-                  headers:
-                    Location:
-                      schema:
-                        type: "string"
-                  content:
-                    text/event-stream:
-                      schema:
-                        type: string
-              x-amazon-apigateway-integration:
-                type: mock
-                requestTemplates:
-                  # text/event-stream: '{"statusCode": 308}'
-                  application/json: '{"statusCode": 308}'
-                responses:
-                  default:
-                    statusCode: "308"
-                    responseParameters:
-                      method.response.header.Location:
-                        Fn::Sub: "'${ATRStreamFunctionUrl.FunctionUrl}'"
-                passthroughBehavior: "when_no_match"
+  # ATRRedirect:
+  #   Type: AWS::Serverless::HttpApi
+  #   Properties:
+  #     CorsConfiguration:
+  #       AllowCredentials: false
+  #       AllowOrigins:
+  #         - !Sub ${FrontendURL}
+  #       AllowHeaders:
+  #         - "*"
+  #     # Cors:
+  #     #   AllowCredentials: false
+  #     #   AllowOrigin: ["*"]
+  #     #   AllowHeaders: ["*"]
+  #     #   AllowMethods: ["*"]
+  #     StageName: !Sub ${StageName}
+  #     DefinitionBody:
+  #       openapi: "3.0.3"
+  #       info:
+  #         title: "Redirect to Streaming Lambda url"
+  #         version: "1.0"
+  #       paths:
+  #         /send_message:
+  #           post:
+  #             responses:
+  #               "308":
+  #                 description: "Redirect"
+  #                 headers:
+  #                   Location:
+  #                     schema:
+  #                       type: "string"
+  #                 content:
+  #                   text/event-stream:
+  #                     schema:
+  #                       type: string
+  #             x-amazon-apigateway-integration:
+  #               type: mock
+  #               requestTemplates:
+  #                 # text/event-stream: '{"statusCode": 308}'
+  #                 application/json: '{"statusCode": 308}'
+  #               responses:
+  #                 default:
+  #                   statusCode: "308"
+  #                   responseParameters:
+  #                     method.response.header.Location:
+  #                       Fn::Sub: "'${ATRStreamFunctionUrl.FunctionUrl}'"
+  #               passthroughBehavior: "when_no_match"
 
 Outputs:
   ATRStreamFunctionArn:
