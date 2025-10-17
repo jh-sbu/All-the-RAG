@@ -74,7 +74,7 @@ function Chatbot({ onUpdateSources }: ChatbotProps) {
           if (done) break;
 
           buffer += new TextDecoder().decode(value);
-          console.log(`Buffer: ${buffer}`);
+          // console.log(`Buffer: ${buffer}`);
           const lines = buffer.split('\n');
 
           // Keep the last incomplete line in the buffer
@@ -107,7 +107,7 @@ function Chatbot({ onUpdateSources }: ChatbotProps) {
                     });
                   }
                 } else if (currentEvent === 'update_sources') {
-                  console.log(`Got a source update: ${currentData}`);
+                  // console.log(`Got a source update: ${currentData}`);
                   if (json.sources && Array.isArray(json.sources)) {
                     const newSources: ISource[] = json.sources.map((source: any, index: number) => ({
                       number: index + 1,
