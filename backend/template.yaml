@@ -52,21 +52,21 @@ Globals:
         FLASK_ENV: production
 
 Resources:
-  ApiGateway:
-    Type: AWS::Serverless::HttpApi
-    Properties:
-      StageName: !Sub ${StageName}
-      # EndpointConfiguration: REGIONAL
-      # Cors:
-      #   AllowMethods: "'GET,POST,OPTIONS'"
-      #   AllowHeaders: "'Content-Type,Authorization'"
-      #   AllowOrigin: "'*'"
-      CorsConfiguration:
-        AllowCredentials: false
-        AllowOrigins:
-          - !Sub ${FrontendURL}
-        AllowHeaders:
-          - "*"
+  # ApiGateway:
+  #   Type: AWS::Serverless::HttpApi
+  #   Properties:
+  #     StageName: !Sub ${StageName}
+  #     # EndpointConfiguration: REGIONAL
+  #     # Cors:
+  #     #   AllowMethods: "'GET,POST,OPTIONS'"
+  #     #   AllowHeaders: "'Content-Type,Authorization'"
+  #     #   AllowOrigin: "'*'"
+  #     CorsConfiguration:
+  #       AllowCredentials: false
+  #       AllowOrigins:
+  #         - !Sub ${FrontendURL}
+  #       AllowHeaders:
+  #         - "*"
 
   ATRStreamFunction:
     Type: AWS::Serverless::Function
@@ -119,79 +119,79 @@ Resources:
           SECRET_KEY: ""
           VDB: "Amazon S3 Vector"
 
-  ATRFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: src/
-      Handler: startup.sh
-      Layers:
-        - !Sub arn:aws:lambda:${AWS::Region}:753240598075:layer:LambdaAdapterLayerX86:25
-      Policies:
-        - Statement:
-            - Effect: Allow
-              Action:
-                - bedrock:InvokeModel
-              Resource:
-                - !Sub arn:aws:bedrock:${AWS::Region}::foundation-model/*
-            - Effect: Allow
-              Action:
-                - s3vectors:QueryVectors
-                - s3vectors:GetVectors
-              Resource:
-                - !Sub arn:aws:s3vectors:${AWS::Region}:${BucketNumber}:bucket/${BucketName}/index/${IndexName}
-
-      Events:
-        GetHistory:
-          Type: HttpApi
-          Properties:
-            # RestApiId: !Ref ApiGateway
-            Path: /chat_history
-            Method: GET
-        Register:
-          Type: HttpApi
-          Properties:
-            # RestApiId: !Ref ApiGateway
-            Path: /register
-            Method: POST
-        Login:
-          Type: HttpApi
-          Properties:
-            # RestApiId: !Ref ApiGateway
-            Path: /login
-            Method: POST
-        PastChats:
-          Type: HttpApi
-          Properties:
-            # RestApiId: !Ref ApiGateway
-            Path: /past_chats
-            Method: GET
-        HealthCheck:
-          Type: HttpApi
-          Properties:
-            Path: /health_check
-            Method: GET
-      Environment:
-        Variables:
-          AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap
-          PORT: "3459"
-          AWS_LWA_READINESS_CHECK_PORT: "3459"
-          AWS_LWA_READINESS_CHECK_PATH: /health_check
-          AWS_LWA_READ_TIMEOUTE: "10"
-          AWS_LWA_WRITE_TIMEOUTE: "10"
-          API_KEY: ""
-          BASE_URL: !Ref BaseUrl
-          BUCKET_NAME: !Ref BucketName
-          COMPLETION_MODEL: !Ref CompletionModel
-          COMPLETION_PROVIDER: !Ref CompletionProvider
-          EMBEDDING_MODEL: !Ref EmbeddingModel
-          INDEX_NAME: !Ref IndexName
-          LOG_LEVEL: "info"
-          PROFILE_NAME: !Ref ProfileName
-          PROFILE_REGION: !Ref ProfileRegion
-          SECRET_KEY: ""
-          VDB: "Amazon S3 Vector"
-    MetaData:
-      BuildMethod: python3.12
+  # ATRFunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     CodeUri: src/
+  #     Handler: startup.sh
+  #     Layers:
+  #       - !Sub arn:aws:lambda:${AWS::Region}:753240598075:layer:LambdaAdapterLayerX86:25
+  #     Policies:
+  #       - Statement:
+  #           - Effect: Allow
+  #             Action:
+  #               - bedrock:InvokeModel
+  #             Resource:
+  #               - !Sub arn:aws:bedrock:${AWS::Region}::foundation-model/*
+  #           - Effect: Allow
+  #             Action:
+  #               - s3vectors:QueryVectors
+  #               - s3vectors:GetVectors
+  #             Resource:
+  #               - !Sub arn:aws:s3vectors:${AWS::Region}:${BucketNumber}:bucket/${BucketName}/index/${IndexName}
+  #
+  #     Events:
+  #       GetHistory:
+  #         Type: HttpApi
+  #         Properties:
+  #           # RestApiId: !Ref ApiGateway
+  #           Path: /chat_history
+  #           Method: GET
+  #       Register:
+  #         Type: HttpApi
+  #         Properties:
+  #           # RestApiId: !Ref ApiGateway
+  #           Path: /register
+  #           Method: POST
+  #       Login:
+  #         Type: HttpApi
+  #         Properties:
+  #           # RestApiId: !Ref ApiGateway
+  #           Path: /login
+  #           Method: POST
+  #       PastChats:
+  #         Type: HttpApi
+  #         Properties:
+  #           # RestApiId: !Ref ApiGateway
+  #           Path: /past_chats
+  #           Method: GET
+  #       HealthCheck:
+  #         Type: HttpApi
+  #         Properties:
+  #           Path: /health_check
+  #           Method: GET
+  #     Environment:
+  #       Variables:
+  #         AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap
+  #         PORT: "3459"
+  #         AWS_LWA_READINESS_CHECK_PORT: "3459"
+  #         AWS_LWA_READINESS_CHECK_PATH: /health_check
+  #         AWS_LWA_READ_TIMEOUTE: "10"
+  #         AWS_LWA_WRITE_TIMEOUTE: "10"
+  #         API_KEY: ""
+  #         BASE_URL: !Ref BaseUrl
+  #         BUCKET_NAME: !Ref BucketName
+  #         COMPLETION_MODEL: !Ref CompletionModel
+  #         COMPLETION_PROVIDER: !Ref CompletionProvider
+  #         EMBEDDING_MODEL: !Ref EmbeddingModel
+  #         INDEX_NAME: !Ref IndexName
+  #         LOG_LEVEL: "info"
+  #         PROFILE_NAME: !Ref ProfileName
+  #         PROFILE_REGION: !Ref ProfileRegion
+  #         SECRET_KEY: ""
+  #         VDB: "Amazon S3 Vector"
+  #   MetaData:
+  #     BuildMethod: python3.12
 
   # ATRRedirect:
   #   Type: AWS::Serverless::HttpApi
@@ -241,26 +241,26 @@ Resources:
   #               passthroughBehavior: "when_no_match"
 
 Outputs:
-  ATRStreamFunctionArn:
-    Value: !GetAtt ATRStreamFunction.Arn
+  # ATRStreamFunctionArn:
+  #   Value: !GetAtt ATRStreamFunction.Arn
   ATRStreamFunctionUrl:
     Value: !GetAtt ATRStreamFunctionUrl.FunctionUrl
     Description: Public Function url with response streaming enabled
-  ApiUrl:
-    Description: Base URL for the API Gateway stage.
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}"
-  RegisterUrl:
-    Description: POST /register endpoint
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/register"
-  LoginUrl:
-    Description: POST /login endpoint
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/login"
-  PastChatsUrl:
-    Description: GET /past_chats endpoint
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/past_chats"
-  ChatHistroyUrl:
-    Description: GET /chat_history endpoint
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/chat_history"
-  SendMessageUrl:
-    Description: POST /send_message endpoint
-    Value: !Sub "https://${ATRRedirect}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/send_message"
+  # ApiUrl:
+  #   Description: Base URL for the API Gateway stage.
+  #   Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}"
+  # RegisterUrl:
+  #   Description: POST /register endpoint
+  #   Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/register"
+  # LoginUrl:
+  #   Description: POST /login endpoint
+  #   Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/login"
+  # PastChatsUrl:
+  #   Description: GET /past_chats endpoint
+  #   Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/past_chats"
+  # ChatHistroyUrl:
+  #   Description: GET /chat_history endpoint
+  #   Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/chat_history"
+  # SendMessageUrl:
+  #   Description: POST /send_message endpoint
+  #   Value: !Sub "https://${ATRRedirect}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/send_message"
