@@ -87,10 +87,16 @@ def login():
     return jsonify({"error": "Not yet implemented"}), 405
 
 
+@backend.route("/delete_account", methods=["POST"])
+def delete_account():
+    # return not_implemented_error
+    return jsonify({"error": "Not yet implemented"}), 405
+
+
 @backend.route("/past_chats", methods=["GET"])
 def get_histories():
     # return not_implemented_error
-    return jsonify({"error": "Not implemented yet"}), 405
+    return jsonify({"error": "Not yet implemented"}), 405
 
 
 @backend.route("/chat_history", methods=["GET"])
