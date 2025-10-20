@@ -27,6 +27,9 @@ Parameters:
   EmbeddingModel:
     Type: String
     Description: Embedding model name
+  FrontendURL:
+    Type: String
+    Description: URL for the frontend, used for CORS
   IndexName:
     Type: String
     Description: S3 Vectors index name
@@ -36,9 +39,6 @@ Parameters:
   ProfileRegion:
     Type: String
     Description: AWS Region
-  FrontendURL:
-    Type: String
-    Description: URL for the frontend, used for CORS
 
 Globals:
   Function:

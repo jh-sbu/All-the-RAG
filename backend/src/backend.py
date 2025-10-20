@@ -1,7 +1,14 @@
 from flask import Flask, Response, jsonify, request, stream_with_context
 from flask_cors import CORS
+
+import jwt
+
+from authlib.integrations.flask_client import OAuth
+
 from dotenv import load_dotenv
 import os
+
+import requests
 
 from vdb.amazons3vector import AmazonS3Vector
 from vdb.faiss import FaissIndex
@@ -40,6 +47,16 @@ backend.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 if not backend.config["SECRET_KEY"]:
     raise ValueError("Could not initialize SECRET_KEY for flask")
 
+oauth = OAuth(backend)
+
+if False:
+    google = oauth.register(
+        name="google",
+        client_id="CLIENT_ID",
+        client_secret="CLIENT_SECRET",
+        server_metadata_url="GOOGLE_URL",
+        client_kwargs={"scope": "openid email"},
+    )
 
 # Some hosts, e.g. AWS lambda urls, do CORS themselves; turn on/off
 # flask's own cors depending on whether it is needed or not
@@ -85,6 +102,28 @@ def register():
 def login():
     # return not_implemented_error
     return jsonify({"error": "Not yet implemented"}), 405
+
+
+@backend.route("/auth/callback", methods=["POST"])
+def auth_callback():
+    code = request.json.get("code")
+    code_verifier = request.json.get("code_verifier")
+
+    token_response = requests.post(
+        "GOOGLE_OATH_URL",
+        data={
+            "client_id": "YOUR_CLIENT_ID",
+            "client_secret": "YOUR_CLIENT_SECRET",
+            "code": code,
+            "code_verifier": code_verifier,
+            "redirect_uri": "YOUR_FRONTEND_URI?",
+            "grant_type": "authorization_code",
+        },
+    )
+
+    tokens = token_response.json()
+
+    user_info = jwt.decode(tokens["id_token"], options={"verify_signature": False})
 
 
 @backend.route("/delete_account", methods=["POST"])
