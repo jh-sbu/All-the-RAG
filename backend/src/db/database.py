@@ -1,59 +1,32 @@
-import abc
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
-class Database(metaclass=abc.ABCMeta):
-    @abc.abstractmethod
-    def createUser():
-        """
-        Create a user
-        """
-        raise NotImplementedError
+class Base(DeclarativeBase):
+    pass
 
-    @abc.abstractmethod
-    def readUser():
-        """
-        Read a user
-        """
-        raise NotImplementedError
 
-    @abc.abstractmethod
-    def updateUser():
-        """
-        Update a user
-        """
-        raise NotImplementedError
+class User(Base):
+    __tablename__ = "user"
 
-    @abc.abstractmethod
-    def deleteUser():
-        """
-        Delete a user
-        """
-        raise NotImplementedError
+    id: Mapped[int] = mapped_column(primary_key=True)
 
-    @abc.abstractmethod
-    def createChat():
-        """
-        Create a chat
-        """
-        raise NotImplementedError
+    def __repr__(self) -> str:
+        return f"User(id={self.id!r})"
 
-    @abc.abstractmethod
-    def readChat():
-        """
-        Read a chat
-        """
-        raise NotImplementedError
 
-    @abc.abstractmethod
-    def updateChat():
-        """
-        Update a chat
-        """
-        raise NotImplementedError
+class Chat(Base):
+    __tablename__ = "chat"
 
-    @abc.abstractmethod
-    def deleteChat():
-        """
-        Delete a chat
-        """
-        raise NotImplementedError
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    def __repr__(self) -> str:
+        return f"Chat(id={self.id!r})"
+
+
+class Message(Base):
+    __tablename__ = "message"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    def __repr__(self) -> str:
+        return f"Chat(id={self.id!r})"
