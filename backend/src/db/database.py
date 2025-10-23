@@ -1,6 +1,7 @@
 from typing import List
+import uuid
 from flask import jsonify
-from sqlalchemy import ForeignKey, String, Text, create_engine, select
+from sqlalchemy import ForeignKey, String, Text, Uuid, create_engine, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -38,7 +39,9 @@ class User(Base):
 class Chat(Base):
     __tablename__ = "chat"
 
-    id: Mapped[int] = mapped_column(primary_key=True, init=False)
+    id: Mapped[Uuid] = mapped_column(
+        Uuid, primary_key=True, default=uuid.uuid4, init=False
+    )
     user: Mapped["User"] = relationship(back_populates="chats", init=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
 
@@ -94,3 +97,7 @@ def create_example_chat(db_url: str):
                 messages=[Message(contents="Test message please ignore")],
             )
         )
+
+
+def add_example_message_to_chat(db_url: str):
+    pass
