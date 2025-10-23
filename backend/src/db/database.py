@@ -1,8 +1,6 @@
-import logging
-from operator import add
 from typing import List
 from flask import jsonify
-from sqlalchemy import ForeignKey, String, Text, create_engine, engine
+from sqlalchemy import ForeignKey, String, Text, create_engine, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -41,7 +39,7 @@ class Chat(Base):
     __tablename__ = "chat"
 
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
-    user: Mapped["User"] = relationship(back_populates="chats")
+    user: Mapped["User"] = relationship(back_populates="chats", init=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
 
     messages: Mapped[List["Message"]] = relationship(
@@ -56,8 +54,8 @@ class Message(Base):
     __tablename__ = "message"
 
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
-    chat: Mapped["Chat"] = relationship(back_populates="messages")
-    chat_id: Mapped[int] = mapped_column(ForeignKey("chat.id"))
+    chat: Mapped["Chat"] = relationship(back_populates="messages", init=False)
+    chat_id: Mapped[int] = mapped_column(ForeignKey("chat.id"), init=False)
     contents: Mapped[str] = mapped_column(Text)
 
     def __repr__(self) -> str:
@@ -85,4 +83,14 @@ def create_example_chat(db_url: str):
     engine = create_engine(db_url, echo=True)
 
     with Session(engine) as session:
-        query_username = None
+        test_email_addr = "test_email@example.com"
+        user_id = session.execute(
+            select(User.id).where(User.email == test_email_addr)
+        ).scalar_one()
+
+        session.add(
+            Chat(
+                user_id=user_id,
+                messages=[Message(contents="Test message please ignore")],
+            )
+        )
