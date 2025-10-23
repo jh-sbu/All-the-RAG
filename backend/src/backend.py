@@ -1,3 +1,4 @@
+import json
 from flask import Flask, Response, jsonify, request, stream_with_context
 from flask_cors import CORS
 
@@ -124,6 +125,8 @@ def auth_callback():
     tokens = token_response.json()
 
     user_info = jwt.decode(tokens["id_token"], options={"verify_signature": False})
+
+    return jsonify({"error": "Not yet implemented"}), 405
 
 
 @backend.route("/delete_account", methods=["POST"])

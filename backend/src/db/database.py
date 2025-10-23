@@ -1,9 +1,14 @@
+import logging
+from operator import add
 from typing import List
-from sqlalchemy import ForeignKey, Text, create_engine
+from flask import jsonify
+from sqlalchemy import ForeignKey, String, Text, create_engine, engine
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     MappedAsDataclass,
+    Session,
     mapped_column,
     relationship,
 )
@@ -16,7 +21,13 @@ class Base(DeclarativeBase, MappedAsDataclass):
 class User(Base):
     __tablename__ = "user"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, init=False)
+    email: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
 
     chats: Mapped[List["Chat"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
@@ -29,7 +40,7 @@ class User(Base):
 class Chat(Base):
     __tablename__ = "chat"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, init=False)
     user: Mapped["User"] = relationship(back_populates="chats")
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
 
@@ -44,7 +55,7 @@ class Chat(Base):
 class Message(Base):
     __tablename__ = "message"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, init=False)
     chat: Mapped["Chat"] = relationship(back_populates="messages")
     chat_id: Mapped[int] = mapped_column(ForeignKey("chat.id"))
     contents: Mapped[str] = mapped_column(Text)
@@ -53,5 +64,25 @@ class Message(Base):
         return f"Chat(id={self.id!r}, chat={self.chat!r}, chat_id={self.chat_id!r}, contents={self.contents!r})"
 
 
-def get_session(db_pathstring: str):
-    engine = create_engine(db_pathstring)
+def add_test_user(db_url: str):
+    engine = create_engine(db_url, echo=True)
+
+    with Session(engine) as session:
+        test_user = User(email="test_email@example.com", chats=[])
+
+        try:
+            session.add(test_user)
+            session.commit()
+
+            return "ok", 200
+
+        except IntegrityError:
+            session.rollback()
+            return jsonify({"error": "Test user already created"}), 409
+
+
+def create_example_chat(db_url: str):
+    engine = create_engine(db_url, echo=True)
+
+    with Session(engine) as session:
+        query_username = None
