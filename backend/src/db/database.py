@@ -100,4 +100,14 @@ def create_example_chat(db_url: str):
 
 
 def add_example_message_to_chat(db_url: str):
-    pass
+    engine = create_engine(db_url, echo=True)
+
+    with Session(engine) as session:
+        test_email_addr = "test_email@example.com"
+        chat = session.execute(
+            select(Chat).join(User).where(User.email == test_email_addr).limit(1)
+        ).one()
+
+        chat.messages.append(Message("New test message!"))
+
+        session.commit()

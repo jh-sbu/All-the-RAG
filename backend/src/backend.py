@@ -10,6 +10,7 @@ import os
 
 import requests
 
+from db.database import add_example_message_to_chat, add_test_user, create_example_chat
 from vdb.amazons3vector import AmazonS3Vector
 from vdb.faiss import FaissIndex
 from providers.openrouter import OpenRouter
@@ -201,3 +202,10 @@ def health_check():
 #     print(f"Received event: {event}")
 #     print(f"Received context: {context}")
 #     return awsgi.response(backend, event, context)
+
+
+if __name__ == "__main__":
+    test_db_url = "sqlite+pysqlite:///../sandbox/test_db.db"
+    add_test_user(test_db_url)
+    create_example_chat(test_db_url)
+    add_example_message_to_chat(test_db_url)
