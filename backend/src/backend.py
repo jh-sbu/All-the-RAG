@@ -147,6 +147,11 @@ def get_chat_history():
     return jsonify({"error": "Not yet implemented"}), 405
 
 
+@backend.route("/delete_chat", methods=["POST"])
+def delete_chat():
+    return jsonify({"error": "Not yet implemented"}), 405
+
+
 @backend.route("/send_message", methods=["POST"])
 def send_message():
     data = request.get_json()
