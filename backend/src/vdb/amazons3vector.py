@@ -1,4 +1,5 @@
 import logging
+from dotenv import load_dotenv
 from flask import json
 from models.context import Context
 from vdb.vdb import VDB
@@ -6,6 +7,7 @@ import boto3
 import os
 from mypy_boto3_bedrock_runtime.client import BedrockRuntimeClient
 
+load_dotenv()
 
 AWS_REGION = os.environ.get("AWS_REGION") or ""
 BUCKET_NAME = os.environ.get("BUCKET_NAME") or ""
