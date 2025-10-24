@@ -13,6 +13,9 @@ EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL") or ""
 INDEX_NAME = os.environ.get("INDEX_NAME") or ""
 PROFILE_NAME = os.environ.get("PROFILE_NAME") or ""
 
+if AWS_REGION == "":
+    raise RuntimeError("Could not find AWS_REGION environmental variable")
+
 if BUCKET_NAME == "":
     raise RuntimeError("Could not find BUCKET_NAME environmental variable")
 
@@ -24,9 +27,6 @@ if INDEX_NAME == "":
 
 if PROFILE_NAME == "":
     raise RuntimeError("Could not find PROFILE_NAME environmental variable")
-
-if AWS_REGION == "":
-    raise RuntimeError("Could not find AWS_REGION environmental variable")
 
 
 def build_message(text: str) -> dict:
