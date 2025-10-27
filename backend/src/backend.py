@@ -77,6 +77,8 @@ vector_db = (
     else FaissIndex()
 )
 
+database_url = os.environ.get("DATABASE_URL", "sqlite+pysqlite:///example.db")
+
 logger.debug(f"VDB provider read as: {vdb_provider}")
 logger.debug(f"Created vector db interface of type {type(vector_db)}")
 
@@ -210,7 +212,6 @@ def health_check():
 
 
 if __name__ == "__main__":
-    test_db_url = "sqlite+pysqlite:///../sandbox/test_db.db"
-    add_test_user(test_db_url)
-    create_example_chat(test_db_url)
-    add_example_message_to_chat(test_db_url)
+    add_test_user(database_url)
+    create_example_chat(database_url)
+    add_example_message_to_chat(database_url)
