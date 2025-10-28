@@ -119,6 +119,22 @@ Resources:
           SECRET_KEY: ""
           VDB: "Amazon S3 Vector"
 
+  ATRStreamFunctionUrlInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref ATRStreamFunction
+      Principal: "*"
+      FunctionUrlAuthType: NONE
+
+  ATRStreamFunctionCoreInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ATRStreamFunction
+      Principal: "*"
+      InvokedViaFunctionUrl: true
+
   # ATRFunction:
   #   Type: AWS::Serverless::Function
   #   Properties:
