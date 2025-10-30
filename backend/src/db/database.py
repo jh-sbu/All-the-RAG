@@ -2,6 +2,7 @@ from typing import List
 import uuid
 from flask import jsonify
 from sqlalchemy import ForeignKey, String, Text, Uuid, create_engine, select
+from sqlalchemy import exc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -86,28 +87,46 @@ def create_example_chat(db_url: str):
     engine = create_engine(db_url, echo=True)
 
     with Session(engine) as session:
-        test_email_addr = "test_email@example.com"
-        user_id = session.execute(
-            select(User.id).where(User.email == test_email_addr)
-        ).scalar_one()
+        try:
+            test_email_addr = "test_email@example.com"
+            user_id = session.execute(
+                select(User.id).where(User.email == test_email_addr)
+            ).scalar_one()
 
-        session.add(
-            Chat(
-                user_id=user_id,
-                messages=[Message(contents="Test message please ignore")],
+            session.add(
+                Chat(
+                    user_id=user_id,
+                    messages=[Message(contents="Test message please ignore")],
+                )
             )
-        )
+
+            session.commit()
+
+            return "ok", 200
+
+        except IntegrityError:
+            session.rollback()
+            return jsonify({"error": "Could not create example chat"}), 409
 
 
 def add_example_message_to_chat(db_url: str):
     engine = create_engine(db_url, echo=True)
 
     with Session(engine) as session:
-        test_email_addr = "test_email@example.com"
-        chat = session.execute(
-            select(Chat).join(User).where(User.email == test_email_addr).limit(1)
-        ).one()
+        try:
+            test_email_addr = "test_email@example.com"
+            chat = session.execute(
+                select(Chat).join(User).where(User.email == test_email_addr).limit(1)
+            ).one()
 
-        chat.messages.append(Message("New test message!"))
+            chat.messages.append(Message("New test message!"))
 
-        session.commit()
+            session.commit()
+
+            return "ok", 200
+
+        except IntegrityError:
+            session.rollback()
+            return jsonify(
+                {"error": "Could not add example message to example chat"}
+            ), 409

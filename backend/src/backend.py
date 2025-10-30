@@ -193,6 +193,21 @@ def health_check():
     return "ok", 200
 
 
+@backend.route("/test/add_test_user", methods=["GET"])
+def test_add_test_user():
+    return add_test_user(database_url)
+
+
+@backend.route("/test/create_example_chat", methods=["GET"])
+def test_create_example_chat():
+    return create_example_chat(database_url)
+
+
+@backend.route("/test/add_example_message_to_chat", methods=["GET"])
+def test_add_example_message_to_chat():
+    return add_example_message_to_chat(database_url)
+
+
 # @backend.route("/", methods=["GET", "POST"])
 # @backend.route("/<path:path>")
 # def root():
@@ -212,6 +227,7 @@ def health_check():
 
 
 if __name__ == "__main__":
-    add_test_user(database_url)
-    create_example_chat(database_url)
-    add_example_message_to_chat(database_url)
+    backend.run()
+    # add_test_user(database_url)
+    # create_example_chat(database_url)
+    # add_example_message_to_chat(database_url)
