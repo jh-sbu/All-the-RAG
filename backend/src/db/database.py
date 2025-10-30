@@ -2,7 +2,6 @@ from typing import List
 import uuid
 from flask import jsonify
 from sqlalchemy import ForeignKey, String, Text, Uuid, create_engine, select
-from sqlalchemy import exc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -58,9 +57,9 @@ class Message(Base):
     __tablename__ = "message"
 
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
-    chat: Mapped["Chat"] = relationship(back_populates="messages", init=False)
-    chat_id: Mapped[int] = mapped_column(ForeignKey("chat.id"), init=False)
     contents: Mapped[str] = mapped_column(Text)
+    chat: Mapped["Chat"] = relationship(back_populates="messages", init=False)
+    chat_id: Mapped[Uuid] = mapped_column(ForeignKey("chat.id"), default=None)
 
     def __repr__(self) -> str:
         return f"Chat(id={self.id!r}, chat={self.chat!r}, chat_id={self.chat_id!r}, contents={self.contents!r})"
@@ -115,11 +114,11 @@ def add_example_message_to_chat(db_url: str):
     with Session(engine) as session:
         try:
             test_email_addr = "test_email@example.com"
-            chat = session.execute(
-                select(Chat).join(User).where(User.email == test_email_addr).limit(1)
-            ).one()
+            chat_id = session.execute(
+                select(Chat.id).join(User).where(User.email == test_email_addr).limit(1)
+            ).scalar_one()
 
-            chat.messages.append(Message("New test message!"))
+            session.add(Message(chat_id=chat_id, contents="New test message!"))
 
             session.commit()
 

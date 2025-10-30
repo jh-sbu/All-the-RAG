@@ -227,6 +227,8 @@ def test_add_example_message_to_chat():
 
 
 if __name__ == "__main__":
+    print(f"Database URL: {database_url}")
+    logger.debug(f"Database URL: {database_url}")
     backend.run()
     # add_test_user(database_url)
     # create_example_chat(database_url)
