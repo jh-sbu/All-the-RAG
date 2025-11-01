@@ -189,7 +189,6 @@ def send_message():
 
 @backend.route("/health_check", methods=["GET"])
 def health_check():
-    # return jsonify({"key": "value"}), 200
     return "ok", 200
 
 
@@ -208,28 +207,13 @@ def test_add_example_message_to_chat():
     return add_example_message_to_chat(database_url)
 
 
-# @backend.route("/", methods=["GET", "POST"])
-# @backend.route("/<path:path>")
-# def root():
-#     return "ok", 200
-
-
 # print(__name__)
 # if __name__ == "__main__":
 #     # app.run()
 #     backend.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
 
 
-# def lambda_handler(event, context):
-#     print(f"Received event: {event}")
-#     print(f"Received context: {context}")
-#     return awsgi.response(backend, event, context)
-
-
 if __name__ == "__main__":
     print(f"Database URL: {database_url}")
     logger.debug(f"Database URL: {database_url}")
     backend.run()
-    # add_test_user(database_url)
-    # create_example_chat(database_url)
-    # add_example_message_to_chat(database_url)
