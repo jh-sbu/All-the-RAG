@@ -1,7 +1,15 @@
 from typing import List
 import uuid
 from flask import jsonify
-from sqlalchemy import ForeignKey, String, Text, Uuid, create_engine, select
+from sqlalchemy import (
+    ForeignKey,
+    ForeignKeyConstraint,
+    String,
+    Text,
+    Uuid,
+    create_engine,
+    select,
+)
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -45,14 +53,20 @@ class Chat(Base):
         Uuid, primary_key=True, default=uuid.uuid4, init=False
     )
     user: Mapped["User"] = relationship(back_populates="chats", init=False)
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    user_issuer: Mapped[str] = mapped_column(ForeignKey("user.issuer"))
+    user_sub: Mapped[str] = mapped_column(ForeignKey("user.sub"))
+
+    # Apparently there is no ORM only version of this?
+    __table_args__ = (
+        ForeignKeyConstraint(["user_issuer", "user_sub"], ["user.issuer", "user.sub"]),
+    )
 
     messages: Mapped[List["Message"]] = relationship(
         back_populates="chat", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:
-        return f"Chat(id={self.id!r}, user={self.user!r}, user_id={self.user_id!r}, messages={self.messages!r})"
+        return f"Chat(id={self.id!r}, user={self.user!r}, user_issuer={self.user_issuer!r}, user_sub={self.user_sub!r}, messages={self.messages!r})"
 
 
 class Message(Base):
