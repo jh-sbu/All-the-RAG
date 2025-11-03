@@ -41,7 +41,7 @@ class User(Base):
     chats: Mapped[List["Chat"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
-        foreign_keys=lambda: [Chat.user_issuer, Chat.user_sub],
+        # foreign_keys=lambda: [Chat.user_issuer, Chat.user_sub],
     )
 
     def __repr__(self) -> str:
@@ -54,9 +54,12 @@ class Chat(Base):
     id: Mapped[Uuid] = mapped_column(
         Uuid, primary_key=True, default=uuid.uuid4, init=False
     )
-    user: Mapped["User"] = relationship(
-        back_populates="chats", init=False, foreign_keys=[User.issuer, User.sub]
-    )
+    # user: Mapped["User"] = relationship(
+    #     back_populates="chats", init=False, foreign_keys=lambda: [User.issuer, User.sub]
+    # )
+
+    user: Mapped["User"] = relationship(back_populates="chats", init=False)
+
     user_issuer: Mapped[str] = mapped_column(String(255))
     user_sub: Mapped[str] = mapped_column(String(255))
 
@@ -116,7 +119,7 @@ def create_example_chat(db_url: str):
             test_email_addr = "test_email@example.com"
             user_id = session.execute(
                 select(User.issuer, User.sub).where(User.email == test_email_addr)
-            ).scalar_one()
+            ).all()[0]
 
             session.add(
                 Chat(
