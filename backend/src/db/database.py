@@ -39,7 +39,9 @@ class User(Base):
     )
 
     chats: Mapped[List["Chat"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan"
+        back_populates="user",
+        cascade="all, delete-orphan",
+        foreign_keys=lambda: [Chat.user_issuer, Chat.user_sub],
     )
 
     def __repr__(self) -> str:
@@ -52,9 +54,11 @@ class Chat(Base):
     id: Mapped[Uuid] = mapped_column(
         Uuid, primary_key=True, default=uuid.uuid4, init=False
     )
-    user: Mapped["User"] = relationship(back_populates="chats", init=False)
-    user_issuer: Mapped[str] = mapped_column(ForeignKey("user.issuer"))
-    user_sub: Mapped[str] = mapped_column(ForeignKey("user.sub"))
+    user: Mapped["User"] = relationship(
+        back_populates="chats", init=False, foreign_keys=[User.issuer, User.sub]
+    )
+    user_issuer: Mapped[str] = mapped_column(String(255))
+    user_sub: Mapped[str] = mapped_column(String(255))
 
     # Apparently there is no ORM only version of this?
     __table_args__ = (
@@ -62,7 +66,8 @@ class Chat(Base):
     )
 
     messages: Mapped[List["Message"]] = relationship(
-        back_populates="chat", cascade="all, delete-orphan"
+        back_populates="chat",
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self) -> str:
@@ -115,8 +120,9 @@ def create_example_chat(db_url: str):
 
             session.add(
                 Chat(
-                    user_id=user_id,
                     messages=[Message(contents="Test message please ignore")],
+                    user_issuer=user_id[0],
+                    user_sub=user_id[1],
                 )
             )
 
