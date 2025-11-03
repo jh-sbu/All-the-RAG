@@ -20,7 +20,9 @@ class Base(DeclarativeBase, MappedAsDataclass):
 class User(Base):
     __tablename__ = "user"
 
-    id: Mapped[int] = mapped_column(primary_key=True, init=False)
+    # id: Mapped[int] = mapped_column(primary_key=True, init=False)
+    issuer: Mapped[str] = mapped_column(String(255), primary_key=True)
+    sub: Mapped[str] = mapped_column(String(255), primary_key=True)
     email: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
@@ -33,7 +35,7 @@ class User(Base):
     )
 
     def __repr__(self) -> str:
-        return f"User(id={self.id!r})"
+        return f"User(issuer={self.issuer!r}, sub={self.sub!r}, email={self.email!r})"
 
 
 class Chat(Base):
@@ -69,7 +71,12 @@ def add_test_user(db_url: str):
     engine = create_engine(db_url, echo=True)
 
     with Session(engine) as session:
-        test_user = User(email="test_email@example.com", chats=[])
+        test_user = User(
+            issuer="test_idp",
+            sub="123456abcd",
+            email="test_email@example.com",
+            chats=[],
+        )
 
         try:
             session.add(test_user)
@@ -89,7 +96,7 @@ def create_example_chat(db_url: str):
         try:
             test_email_addr = "test_email@example.com"
             user_id = session.execute(
-                select(User.id).where(User.email == test_email_addr)
+                select(User.issuer, User.sub).where(User.email == test_email_addr)
             ).scalar_one()
 
             session.add(
