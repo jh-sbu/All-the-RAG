@@ -54,7 +54,7 @@ class OpenRouter(Provider):
 
     def request(
         self, contexts: list[Context], messages: list[dict[str, str]]
-    ) -> Generator:
+    ) -> Generator[str, None, None]:
         self.logger.debug(
             f"Received request with {len(contexts)} contexts and {len(messages)} messages"
         )

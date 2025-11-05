@@ -10,6 +10,7 @@ from sqlalchemy import (
     create_engine,
     select,
 )
+from sqlalchemy import exc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -82,11 +83,29 @@ class Message(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
     contents: Mapped[str] = mapped_column(Text)
+    role: Mapped[str] = mapped_column(String(255))
     chat: Mapped["Chat"] = relationship(back_populates="messages", init=False)
     chat_id: Mapped[Uuid] = mapped_column(ForeignKey("chat.id"), default=None)
 
     def __repr__(self) -> str:
         return f"Chat(id={self.id!r}, chat={self.chat!r}, chat_id={self.chat_id!r}, contents={self.contents!r})"
+
+
+def store_chat_message(db_url: str, role: str, contents: str, chat_id: Uuid):
+    engine = create_engine(db_url, echo=True)
+
+    with Session(engine) as session:
+        new_message = Message(contents=contents, role=role, chat_id=chat_id)
+
+        try:
+            session.add(new_message)
+            session.commit()
+
+            return "ok", 200
+
+        except IntegrityError:
+            session.rollback()
+            return jsonify({"error": "Could not add new message"}), 409
 
 
 def add_test_user(db_url: str):
@@ -123,7 +142,12 @@ def create_example_chat(db_url: str):
 
             session.add(
                 Chat(
-                    messages=[Message(contents="Test message please ignore")],
+                    messages=[
+                        Message(
+                            contents="Test message please ignore",
+                            role="Test role please ignore",
+                        )
+                    ],
                     user_issuer=user_id[0],
                     user_sub=user_id[1],
                 )
@@ -148,7 +172,13 @@ def add_example_message_to_chat(db_url: str):
                 select(Chat.id).join(User).where(User.email == test_email_addr).limit(1)
             ).scalar_one()
 
-            session.add(Message(chat_id=chat_id, contents="New test message!"))
+            session.add(
+                Message(
+                    chat_id=chat_id,
+                    contents="New test message!",
+                    role="Test role please ignore",
+                )
+            )
 
             session.commit()
 

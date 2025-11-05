@@ -1,8 +1,6 @@
 import abc
 from typing import Generator
 
-from flask import Response
-
 from models.context import Context
 
 
@@ -10,7 +8,7 @@ class Provider(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def request(
         self, contexts: list[Context], messages: list[dict[str, str]]
-    ) -> Generator:
+    ) -> Generator[str, None, None]:
         """
         Send a request to whatever provider is configured by the environment and
         stream back the results
