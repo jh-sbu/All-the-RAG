@@ -1,3 +1,4 @@
+import json
 from flask import Flask, Response, jsonify, request, stream_with_context
 from flask_cors import CORS
 
@@ -9,6 +10,7 @@ from dotenv import load_dotenv
 import os
 
 import requests
+from sqlalchemy.orm import exc
 
 from atr_logger import get_logger, set_log_level
 from db.database import add_example_message_to_chat, add_test_user, create_example_chat
@@ -17,6 +19,8 @@ from vdb.faiss import FaissIndex
 from providers.openrouter import OpenRouter
 from providers.llama_server import Llama
 import logging
+
+from itertools import tee
 
 
 backend = Flask(__name__)
@@ -42,10 +46,8 @@ else:
         log_level = logging.INFO
 
 
-# logger = logging.getLogger(__name__)
 logger = get_logger()
 set_log_level(log_level)
-# logger.setLevel(log_level)
 
 
 backend.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
@@ -185,10 +187,35 @@ def send_message():
             # logger.debug(f"Received context: {context}")
 
             logger.debug("Querying provider")
-            provide_res = provider.request(contexts, data["messages"])
+            # provide_res = provider.request(contexts, data["messages"])
+
+            # collect_for_db_persist = tee(provide_res, 2)
+
+            def stream_and_store():
+                chunks: list[str] = []
+
+                try:
+                    for event in provider.request(contexts, data["messages"]):
+                        if event[0] == "new_chunk" and event[1] != "":
+                            chunks.append(event[1])
+                            yield f"event: {event[0]}\ndata: {json.dumps({'content': event[1]})}\n\n"
+                        elif event[0] == "update_sources":
+                            yield f"event: {event[0]}\ndata: {event[1]}\n\n"
+
+                        # yield f"event: {event[0]}\ndata: {event[1]}\n\n"
+                        # yield f"event: new_chunk\ndata: {json.dumps({'content': content})}\n\n"
+
+                except StopIteration:
+                    raise
+
+                finally:
+                    logger.info(f"Received message: {''.join(chunks)}")
+                    logger.warning(
+                        "WARNING! WARNING! UPLOADING TO DB NOT YET SUPPORTED!"
+                    )
 
             return Response(
-                stream_with_context(provide_res),
+                stream_with_context(stream_and_store()),
                 mimetype="text/event-stream",
                 headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
             )

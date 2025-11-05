@@ -8,7 +8,7 @@ class Provider(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def request(
         self, contexts: list[Context], messages: list[dict[str, str]]
-    ) -> Generator[str, None, None]:
+    ) -> Generator[tuple[str, str], None, None]:
         """
         Send a request to whatever provider is configured by the environment and
         stream back the results

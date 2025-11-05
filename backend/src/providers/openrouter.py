@@ -41,7 +41,7 @@ class OpenRouter(Provider):
         system_prompt: str = "You are a helpful assistant, who helps users with problems related to the game Minecraft",
     ) -> None:
         super().__init__()
-        load_dotenv()
+        # load_dotenv()
 
         self.model = get_model_name()
 
@@ -55,7 +55,7 @@ class OpenRouter(Provider):
 
     def request(
         self, contexts: list[Context], messages: list[dict[str, str]]
-    ) -> Generator[str, None, None]:
+    ) -> Generator[tuple[str, str], None, None]:
         logger.debug(
             f"Received request with {len(contexts)} contexts and {len(messages)} messages"
         )
@@ -93,7 +93,8 @@ class OpenRouter(Provider):
                 for context in contexts
             ]
             logger.debug(f"Source list with {len(source_list)} items prepared")
-            yield f"event: update_sources\ndata: {json.dumps({'sources': source_list})}\n\n"
+            # yield f"event: update_sources\ndata: {json.dumps({'sources': source_list})}\n\n"
+            yield "update_sources", json.dumps({"sources": source_list})
             logger.debug("Yielded sources")
 
             response = self.client.chat.completions.create(
@@ -106,9 +107,13 @@ class OpenRouter(Provider):
 
             for chunk in response:
                 content = chunk.choices[0].delta.content
-                logger.info(f"New content: {content}")
+                if content is None:
+                    content = ""
+                # logger.info(f"New content: {content}")
                 # if content != "":
-                yield f"event: new_chunk\ndata: {json.dumps({'content': content})}\n\n"
+                # yield f"event: new_chunk\ndata: {json.dumps({'content': content})}\n\n"
+                # yield "new_chunk", json.dumps({"content": content})
+                yield "new_chunk", content
 
         return generate()
 
