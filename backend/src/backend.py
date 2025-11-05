@@ -44,6 +44,13 @@ else:
 logger = logging.getLogger(__name__)
 logger.setLevel(log_level)
 
+handler = logging.StreamHandler()
+handler.setLevel(log_level)
+fmt = logging.Formatter("%(asctime)s | %(levelname)-8s | %(name)s | %(message)s")
+handler.setFormatter(fmt)
+
+logger.addHandler(handler)
+
 backend.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 if not backend.config["SECRET_KEY"]:
     raise ValueError("Could not initialize SECRET_KEY for flask")
@@ -109,24 +116,29 @@ def login():
 
 @backend.route("/auth/callback", methods=["POST"])
 def auth_callback():
-    code = request.json.get("code")
-    code_verifier = request.json.get("code_verifier")
+    req_json = request.json
+    if req_json is not None:
+        code = req_json.get("code")
+        code_verifier = req_json.get("code_verifier")
 
-    token_response = requests.post(
-        "GOOGLE_OATH_URL",
-        data={
-            "client_id": "YOUR_CLIENT_ID",
-            "client_secret": "YOUR_CLIENT_SECRET",
-            "code": code,
-            "code_verifier": code_verifier,
-            "redirect_uri": "YOUR_FRONTEND_URI?",
-            "grant_type": "authorization_code",
-        },
-    )
+        token_response = requests.post(
+            "GOOGLE_OATH_URL",
+            data={
+                "client_id": "YOUR_CLIENT_ID",
+                "client_secret": "YOUR_CLIENT_SECRET",
+                "code": code,
+                "code_verifier": code_verifier,
+                "redirect_uri": "YOUR_FRONTEND_URI?",
+                "grant_type": "authorization_code",
+            },
+        )
 
-    tokens = token_response.json()
+        tokens = token_response.json()
 
-    user_info = jwt.decode(tokens["id_token"], options={"verify_signature": False})
+        user_info = jwt.decode(tokens["id_token"], options={"verify_signature": False})
+
+    if False:
+        return jsonify({"error": "Could not read json from request"}), 400
 
     return jsonify({"error": "Not yet implemented"}), 405
 
@@ -176,6 +188,10 @@ def send_message():
             logger.debug("Querying provider")
             provide_res = provider.request(contexts, data["messages"])
 
+            print("EHUIWEHAIJFIASNFJ")
+            logger.debug("its here")
+            print("kjvnsdudfuiagnuabnUIHAUIFHUIBFAUIBFUIA")
+
             return Response(
                 stream_with_context(provide_res),
                 mimetype="text/event-stream",
@@ -214,6 +230,6 @@ def test_add_example_message_to_chat():
 
 
 if __name__ == "__main__":
-    print(f"Database URL: {database_url}")
+    # print(f"Database URL: {database_url}")
     logger.debug(f"Database URL: {database_url}")
     backend.run()
