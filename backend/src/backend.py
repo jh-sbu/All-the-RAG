@@ -10,6 +10,7 @@ import os
 
 import requests
 
+from atr_logger import get_logger, set_log_level
 from db.database import add_example_message_to_chat, add_test_user, create_example_chat
 from vdb.amazons3vector import AmazonS3Vector
 from vdb.faiss import FaissIndex
@@ -41,15 +42,11 @@ else:
         log_level = logging.INFO
 
 
-logger = logging.getLogger(__name__)
-logger.setLevel(log_level)
+# logger = logging.getLogger(__name__)
+logger = get_logger()
+set_log_level(log_level)
+# logger.setLevel(log_level)
 
-handler = logging.StreamHandler()
-handler.setLevel(log_level)
-fmt = logging.Formatter("%(asctime)s | %(levelname)-8s | %(name)s | %(message)s")
-handler.setFormatter(fmt)
-
-logger.addHandler(handler)
 
 backend.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 if not backend.config["SECRET_KEY"]:
@@ -89,15 +86,16 @@ database_url = os.environ.get("DATABASE_URL", "sqlite+pysqlite:///example.db")
 logger.debug(f"VDB provider read as: {vdb_provider}")
 logger.debug(f"Created vector db interface of type {type(vector_db)}")
 
-system_prompt = "You are a helpful assistant that assists users with the All the Mods modpacks for the video game Minecraft. Read the provided context and use it to respond to the user's query. Be concise - your job is to find the relevant information in the given context, not repeat everything you see word for word."
+system_prompt = "You are a helpful assistant that assists users with the All the Mods modpacks for the video game Minecraft. Another model will provide you with whatever context it can about the user's query. Read the provided context and use it to respond to the user's query. Be concise - your job is to find the relevant information in the given context, not repeat everything you see word for word."
 
 completion_provider = os.environ.get("COMPLETION_PROVIDER")
+logger.info(f"Setting up completion provider {completion_provider}")
 if completion_provider is None:
     raise ValueError("Could not find completion provider configuration")
 elif completion_provider == "Local":
     provider = Llama(system_prompt=system_prompt)
 elif completion_provider == "OpenRouter":
-    provider = OpenRouter(system_prompt=system_prompt, log_level=log_level)
+    provider = OpenRouter(system_prompt=system_prompt)
 else:
     raise ValueError("Specified completion provider is not supported")
 
@@ -182,15 +180,12 @@ def send_message():
                 [message["content"] for message in data["messages"]]
             )
             contexts = vector_db.get_nearest(3, full_message)
-            for context in contexts:
-                logger.debug(f"Received context: {context}")
+            logger.debug(f"Received {len(contexts)} context(s)")
+            # for context in contexts:
+            # logger.debug(f"Received context: {context}")
 
             logger.debug("Querying provider")
             provide_res = provider.request(contexts, data["messages"])
-
-            print("EHUIWEHAIJFIASNFJ")
-            logger.debug("its here")
-            print("kjvnsdudfuiagnuabnUIHAUIFHUIBFAUIBFUIA")
 
             return Response(
                 stream_with_context(provide_res),

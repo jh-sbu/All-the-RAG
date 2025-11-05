@@ -2,10 +2,11 @@ import logging
 import os
 from typing import Generator, Iterable
 from dotenv import load_dotenv
-from flask import Response, json, stream_with_context
+from flask import json
 import openai
 from openai.types.chat import ChatCompletionMessageParam
 
+from atr_logger import get_logger
 from models.context import Context
 from providers.provider import Provider
 
@@ -31,22 +32,22 @@ def get_client() -> openai.OpenAI:
     return openai.OpenAI(api_key=api_key, base_url=base_url)
 
 
+logger = get_logger()
+
+
 class OpenRouter(Provider):
     def __init__(
         self,
         system_prompt: str = "You are a helpful assistant, who helps users with problems related to the game Minecraft",
-        log_level: int = logging.INFO,
     ) -> None:
         super().__init__()
         load_dotenv()
 
         self.model = get_model_name()
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(log_level)
 
         self.client = get_client()
 
-        self.logger.debug(f"Provider client: {self.client}")
+        logger.debug(f"Provider client: {self.client}")
         self._system_prompt: ChatCompletionMessageParam = {
             "role": "system",
             "content": system_prompt,
@@ -55,7 +56,7 @@ class OpenRouter(Provider):
     def request(
         self, contexts: list[Context], messages: list[dict[str, str]]
     ) -> Generator[str, None, None]:
-        self.logger.debug(
+        logger.debug(
             f"Received request with {len(contexts)} contexts and {len(messages)} messages"
         )
         chat_messages: Iterable[ChatCompletionMessageParam] = []
@@ -84,16 +85,16 @@ class OpenRouter(Provider):
 
             chat_messages.append(new_message)
 
-        self.logger.debug("Finished preparing request to provider")
+        logger.debug("Finished preparing request to provider")
 
         def generate():
             source_list = [
                 {"title": "Not provided", "summary": "No summary", "url": context.url}
                 for context in contexts
             ]
-            self.logger.debug(f"Source list with {len(source_list)} items prepared")
+            logger.debug(f"Source list with {len(source_list)} items prepared")
             yield f"event: update_sources\ndata: {json.dumps({'sources': source_list})}\n\n"
-            self.logger.debug("Yielded sources")
+            logger.debug("Yielded sources")
 
             response = self.client.chat.completions.create(
                 messages=chat_messages,
@@ -105,7 +106,7 @@ class OpenRouter(Provider):
 
             for chunk in response:
                 content = chunk.choices[0].delta.content
-                self.logger.debug(f"New content: {content}")
+                logger.info(f"New content: {content}")
                 # if content != "":
                 yield f"event: new_chunk\ndata: {json.dumps({'content': content})}\n\n"
 
