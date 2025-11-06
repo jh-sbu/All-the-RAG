@@ -10,7 +10,6 @@ from sqlalchemy import (
     create_engine,
     select,
 )
-from sqlalchemy import exc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -52,12 +51,9 @@ class User(Base):
 class Chat(Base):
     __tablename__ = "chat"
 
-    id: Mapped[Uuid] = mapped_column(
-        Uuid, primary_key=True, default=uuid.uuid4, init=False
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4, init=False
     )
-    # user: Mapped["User"] = relationship(
-    #     back_populates="chats", init=False, foreign_keys=lambda: [User.issuer, User.sub]
-    # )
 
     user: Mapped["User"] = relationship(back_populates="chats", init=False)
 
@@ -85,13 +81,15 @@ class Message(Base):
     contents: Mapped[str] = mapped_column(Text)
     role: Mapped[str] = mapped_column(String(255))
     chat: Mapped["Chat"] = relationship(back_populates="messages", init=False)
-    chat_id: Mapped[Uuid] = mapped_column(ForeignKey("chat.id"), default=None)
+    chat_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("chat.id"), default=None
+    )
 
     def __repr__(self) -> str:
         return f"Chat(id={self.id!r}, chat={self.chat!r}, chat_id={self.chat_id!r}, contents={self.contents!r})"
 
 
-def store_chat_message(db_url: str, role: str, contents: str, chat_id: Uuid):
+def store_chat_message(db_url: str, role: str, contents: str, chat_id: uuid.UUID):
     engine = create_engine(db_url, echo=True)
 
     with Session(engine) as session:

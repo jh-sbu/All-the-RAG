@@ -1,4 +1,5 @@
 import json
+import uuid
 from flask import Flask, Response, jsonify, request, stream_with_context
 from flask_cors import CORS
 
@@ -10,17 +11,20 @@ from dotenv import load_dotenv
 import os
 
 import requests
-from sqlalchemy.orm import exc
+from sqlalchemy import Uuid
 
 from atr_logger import get_logger, set_log_level
-from db.database import add_example_message_to_chat, add_test_user, create_example_chat
+from db.database import (
+    add_example_message_to_chat,
+    add_test_user,
+    create_example_chat,
+    store_chat_message,
+)
 from vdb.amazons3vector import AmazonS3Vector
 from vdb.faiss import FaissIndex
 from providers.openrouter import OpenRouter
 from providers.llama_server import Llama
 import logging
-
-from itertools import tee
 
 
 backend = Flask(__name__)
@@ -174,6 +178,12 @@ def send_message():
         return jsonify({"error": "No user prompt received"}), 400
 
     else:
+        # store_chat_message(
+        #     database_url,
+        #     "user",
+        #     data,
+        #     uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
+        # )
         logger.debug(f"Received request: {data['messages']}")
         try:
             # TODO fix this kludge - why is the model failing to encode if
@@ -181,6 +191,7 @@ def send_message():
             full_message = " ".join(
                 [message["content"] for message in data["messages"]]
             )
+            logger.debug(f"User message: {full_message}")
             contexts = vector_db.get_nearest(3, full_message)
             logger.debug(f"Received {len(contexts)} context(s)")
             # for context in contexts:
@@ -209,7 +220,14 @@ def send_message():
                     raise
 
                 finally:
-                    logger.info(f"Received message: {''.join(chunks)}")
+                    message_content = "".join(chunks)
+                    logger.info(f"Received message: {message_content}")
+                    store_chat_message(
+                        database_url,
+                        "assistant",
+                        message_content,
+                        uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
+                    )
                     logger.warning(
                         "WARNING! WARNING! UPLOADING TO DB NOT YET SUPPORTED!"
                     )
