@@ -178,12 +178,6 @@ def send_message():
         return jsonify({"error": "No user prompt received"}), 400
 
     else:
-        # store_chat_message(
-        #     database_url,
-        #     "user",
-        #     data,
-        #     uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
-        # )
         logger.debug(f"Received request: {data['messages']}")
         try:
             # TODO fix this kludge - why is the model failing to encode if
@@ -192,6 +186,14 @@ def send_message():
                 [message["content"] for message in data["messages"]]
             )
             logger.debug(f"User message: {full_message}")
+
+            store_chat_message(
+                database_url,
+                "user",
+                full_message,
+                uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
+            )
+
             contexts = vector_db.get_nearest(3, full_message)
             logger.debug(f"Received {len(contexts)} context(s)")
             # for context in contexts:
@@ -199,8 +201,6 @@ def send_message():
 
             logger.debug("Querying provider")
             # provide_res = provider.request(contexts, data["messages"])
-
-            # collect_for_db_persist = tee(provide_res, 2)
 
             def stream_and_store():
                 chunks: list[str] = []
