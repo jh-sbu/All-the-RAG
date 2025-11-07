@@ -12,12 +12,15 @@ import os
 
 import requests
 from sqlalchemy import Uuid
+from sqlalchemy.exc import NoResultFound
 
 from atr_logger import get_logger, set_log_level
 from db.database import (
     add_example_message_to_chat,
     add_test_user,
     create_example_chat,
+    get_user,
+    get_user_chat,
     store_chat_message,
 )
 from vdb.amazons3vector import AmazonS3Vector
@@ -174,73 +177,94 @@ def delete_chat():
 def send_message():
     data = request.get_json()
 
+    # TODO
+    user_email = "test_email@example.com"
+    user = get_user(database_url, user_email)
+
     if data is None or "messages" not in data.keys():
         return jsonify({"error": "No user prompt received"}), 400
 
+    if "uuid" not in data.keys():
+        return jsonify(
+            {
+                "error": "uuid field not received in request (new chats should report uuid as None"
+            }
+        ), 400
+
+    chat_uuid = data["uuid"]
+
+    # New chats from the client should report "None" for their uuid
+    if chat_uuid == "None":
+        logger.debug("Received post request with no chat_uuid, creating new one")
+        chat_uuid = uuid.uuid4()
     else:
-        logger.debug(f"Received request: {data['messages']}")
+        logger.debug(f"Received post request with uuid {chat_uuid}, verifying access")
         try:
-            # TODO fix this kludge - why is the model failing to encode if
-            # I don't do this?
-            full_message = " ".join(
-                [message["content"] for message in data["messages"]]
+            chat = get_user_chat(database_url, chat_uuid, user_email)
+            chat_uuid = chat.id
+        except PermissionError:
+            logger.warning(
+                f"User {user_email} attempted to access chat {chat_uuid}, which is a real chat, but not theirs"
             )
-            logger.debug(f"User message: {full_message}")
+            return jsonify({"error": "Record not found"}), 409
+        except NoResultFound:
+            return jsonify({"error": "Record not found"}), 409
 
-            store_chat_message(
-                database_url,
-                "user",
-                full_message,
-                uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
-            )
+    logger.debug(f"Received request: {data['messages']} | UUID: {data['uuid']}")
+    try:
+        full_message = " ".join([message["content"] for message in data["messages"]])
+        logger.debug(f"User message: {full_message}")
+        store_chat_message(
+            database_url,
+            "user",
+            full_message,
+            chat_uuid,
+            # uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
+        )
 
-            contexts = vector_db.get_nearest(3, full_message)
-            logger.debug(f"Received {len(contexts)} context(s)")
-            # for context in contexts:
-            # logger.debug(f"Received context: {context}")
+        contexts = vector_db.get_nearest(3, full_message)
+        logger.debug(f"Received {len(contexts)} context(s)")
 
-            logger.debug("Querying provider")
-            # provide_res = provider.request(contexts, data["messages"])
+        logger.debug("Querying provider")
 
-            def stream_and_store():
-                chunks: list[str] = []
+        def stream_and_store():
+            if data["uuid"] == "None":
+                yield f"event: set_uuid\ndata: {json.dumps({'content': chat_uuid})}\n\n"
 
-                try:
-                    for event in provider.request(contexts, data["messages"]):
-                        if event[0] == "new_chunk" and event[1] != "":
-                            chunks.append(event[1])
-                            yield f"event: {event[0]}\ndata: {json.dumps({'content': event[1]})}\n\n"
-                        elif event[0] == "update_sources":
-                            yield f"event: {event[0]}\ndata: {event[1]}\n\n"
+            chunks: list[str] = []
 
-                        # yield f"event: {event[0]}\ndata: {event[1]}\n\n"
-                        # yield f"event: new_chunk\ndata: {json.dumps({'content': content})}\n\n"
+            try:
+                for event in provider.request(contexts, data["messages"]):
+                    if event[0] == "new_chunk" and event[1] != "":
+                        chunks.append(event[1])
+                        yield f"event: {event[0]}\ndata: {json.dumps({'content': event[1]})}\n\n"
+                    elif event[0] == "update_sources":
+                        yield f"event: {event[0]}\ndata: {event[1]}\n\n"
 
-                except StopIteration:
-                    raise
+            except StopIteration:
+                raise
 
-                finally:
-                    message_content = "".join(chunks)
-                    logger.info(f"Received message: {message_content}")
-                    store_chat_message(
-                        database_url,
-                        "assistant",
-                        message_content,
-                        uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
-                    )
-                    logger.warning(
-                        "WARNING! WARNING! UPLOADING TO DB NOT YET SUPPORTED!"
-                    )
+            finally:
+                message_content = "".join(chunks)
+                logger.info(f"Received message: {message_content}")
+                store_chat_message(
+                    database_url,
+                    "assistant",
+                    message_content,
+                    chat_uuid,
+                    # uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
+                )
+                logger.warning("WARNING! WARNING! UPLOADING TO DB NOT YET SUPPORTED!")
 
-            return Response(
-                stream_with_context(stream_and_store()),
-                mimetype="text/event-stream",
-                headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
-            )
+        return Response(
+            stream_with_context(stream_and_store()),
+            mimetype="text/event-stream",
+            headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
+        )
 
-        except Exception as e:
-            logger.error(f"Error in chat stream: {str(e)}")
-            return jsonify({"error": "Error reaching chatbot"}), 500
+    except Exception as e:
+        logger.error(f"Error in chat stream: {str(e)}")
+        return jsonify({"error": "Error reaching chatbot"}), 500
 
 
 @backend.route("/health_check", methods=["GET"])

@@ -10,7 +10,7 @@ from sqlalchemy import (
     create_engine,
     select,
 )
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -106,6 +106,32 @@ def store_chat_message(db_url: str, role: str, contents: str, chat_id: uuid.UUID
             return jsonify({"error": "Could not add new message"}), 409
 
 
+def get_user_chat(db_url: str, chat_id: uuid.UUID, user_email: str) -> Chat:
+    engine = create_engine(db_url, echo=True)
+
+    with Session(engine) as session:
+        try:
+            user_stmt = select(User).where(User.email == user_email)
+
+            user = session.execute(user_stmt).scalar_one()
+
+            chat_stmt = select(Chat).where(Chat.id == chat_id)
+
+            chat = session.execute(chat_stmt).scalar_one()
+
+            # User tries to access a chat that is not theirs
+            # Don't tell them they hit a real chat that isn't theirs,
+            # but leave this logic separate to make identifying potential
+            # troublemakers easier
+            if user.sub != chat.user_sub or user.issuer != chat.user_issuer:
+                raise PermissionError("User is not the owner of the specified chat")
+
+            return chat
+
+        except NoResultFound:
+            raise
+
+
 def add_test_user(db_url: str):
     engine = create_engine(db_url, echo=True)
 
@@ -158,6 +184,28 @@ def create_example_chat(db_url: str):
         except IntegrityError:
             session.rollback()
             return jsonify({"error": "Could not create example chat"}), 409
+
+
+def get_user(db_url: str, user_email: str) -> User | None:
+    engine = create_engine(db_url, echo=True)
+
+    with Session(engine) as session:
+        try:
+            user_stmt = select(User).where(User.email == user_email)
+            user = session.execute(user_stmt).scalar_one()
+            return user
+        except NoResultFound:
+            return None
+
+
+def create_new_chat(db_url: str, initial_message: str):
+    engine = create_engine(db_url, echo=True)
+
+    with Session(engine) as session:
+        try:
+            pass
+        except:
+            pass
 
 
 def add_example_message_to_chat(db_url: str):
