@@ -19,6 +19,7 @@ from db.database import (
     add_example_message_to_chat,
     add_test_user,
     create_example_chat,
+    create_new_chat,
     get_user,
     get_user_chat,
     store_chat_message,
@@ -187,40 +188,52 @@ def send_message():
     if "uuid" not in data.keys():
         return jsonify(
             {
-                "error": "uuid field not received in request (new chats should report uuid as None"
+                "error": "uuid field not received in request (new chats should report uuid as None)"
             }
         ), 400
 
     chat_uuid = data["uuid"]
+    full_message = " ".join([message["content"] for message in data["messages"]])
+    logger.debug(f"User message: {full_message}")
 
-    # New chats from the client should report "None" for their uuid
-    if chat_uuid == "None":
-        logger.debug("Received post request with no chat_uuid, creating new one")
-        chat_uuid = uuid.uuid4()
-    else:
-        logger.debug(f"Received post request with uuid {chat_uuid}, verifying access")
-        try:
-            chat = get_user_chat(database_url, chat_uuid, user_email)
-            chat_uuid = chat.id
-        except PermissionError:
-            logger.warning(
-                f"User {user_email} attempted to access chat {chat_uuid}, which is a real chat, but not theirs"
-            )
-            return jsonify({"error": "Record not found"}), 409
-        except NoResultFound:
-            return jsonify({"error": "Record not found"}), 409
-
-    logger.debug(f"Received request: {data['messages']} | UUID: {data['uuid']}")
     try:
-        full_message = " ".join([message["content"] for message in data["messages"]])
-        logger.debug(f"User message: {full_message}")
-        store_chat_message(
-            database_url,
-            "user",
-            full_message,
-            chat_uuid,
-            # uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
-        )
+        if user is not None:
+            # New chat
+            if chat_uuid == "None":
+                logger.debug(
+                    "Received post request with no chat_uuid, creating new one"
+                )
+                chat = create_new_chat(database_url, full_message, user)
+                if chat is None:
+                    return jsonify({"error": "Failed to save user chat"}), 500
+
+                chat_uuid = chat.id
+
+            # Double check to make sure this is an existing chat
+            else:
+                logger.debug(
+                    f"Received post request with uuid {chat_uuid}, verifying access"
+                )
+                try:
+                    chat = get_user_chat(database_url, chat_uuid, user_email)
+                    chat_uuid = chat.id
+
+                except PermissionError:
+                    logger.warning(
+                        f"User {user_email} attempted to access chat {chat_uuid}, which is a real chat, but not theirs"
+                    )
+                    return jsonify({"error": "Record not found"}), 404
+
+                except NoResultFound:
+                    return jsonify({"error": "Record not found"}), 404
+
+                store_chat_message(
+                    database_url,
+                    "user",
+                    full_message,
+                    chat_uuid,
+                    # uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
+                )
 
         contexts = vector_db.get_nearest(3, full_message)
         logger.debug(f"Received {len(contexts)} context(s)")
@@ -228,8 +241,11 @@ def send_message():
         logger.debug("Querying provider")
 
         def stream_and_store():
-            if data["uuid"] == "None":
-                yield f"event: set_uuid\ndata: {json.dumps({'content': chat_uuid})}\n\n"
+            # Pyright understands chat_uuid is not "None" if user
+            # is not None, if we check chat_uuid here it complains
+            # about chat_uuid below in the finally block
+            if data["uuid"] == "None" and user is not None:
+                yield f"event: set_uuid\ndata: {json.dumps({'content': str(chat_uuid)})}\n\n"
 
             chunks: list[str] = []
 
@@ -247,13 +263,14 @@ def send_message():
             finally:
                 message_content = "".join(chunks)
                 logger.info(f"Received message: {message_content}")
-                store_chat_message(
-                    database_url,
-                    "assistant",
-                    message_content,
-                    chat_uuid,
-                    # uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
-                )
+                if user is not None:
+                    store_chat_message(
+                        database_url,
+                        "assistant",
+                        message_content,
+                        chat_uuid,
+                        # uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
+                    )
                 logger.warning("WARNING! WARNING! UPLOADING TO DB NOT YET SUPPORTED!")
 
         return Response(

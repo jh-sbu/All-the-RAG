@@ -198,14 +198,23 @@ def get_user(db_url: str, user_email: str) -> User | None:
             return None
 
 
-def create_new_chat(db_url: str, initial_message: str):
+def create_new_chat(db_url: str, initial_message: str, user: User):
     engine = create_engine(db_url, echo=True)
+
+    # raise NotImplementedError
 
     with Session(engine) as session:
         try:
-            pass
-        except:
-            pass
+            new_chat = Chat(user.issuer, user.sub, [Message(initial_message, "user")])
+            session.add(new_chat)
+            session.commit()
+            session.refresh(new_chat)
+
+            return new_chat
+
+        except IntegrityError:
+            session.rollback()
+            return None
 
 
 def add_example_message_to_chat(db_url: str):
