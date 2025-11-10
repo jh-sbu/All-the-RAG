@@ -7,7 +7,7 @@ declare const __uuidBrand: unique symbol;
 export type UUID = string & { readonly [__uuidBrand]: 'UUID' };
 
 export interface IChatSession {
-  id: UUID | "None";
+  id: UUID;
   chat_title: string,
   messages: IMessage[]
 }

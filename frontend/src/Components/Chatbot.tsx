@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { IMessage } from '../Models/Message';
 import { ISource } from '../Models/Source';
 import './Chatbot.css';
+import { UUID } from '../Models/ChatSession';
 
 interface ChatbotProps {
   onUpdateSources: (sources: ISource[]) => void;
@@ -12,6 +13,7 @@ function Chatbot({ onUpdateSources }: ChatbotProps) {
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [healthStatus, setHealthStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [chatId, setChatId] = useState<UUID | "None">("None");
 
   const checkHealth = async () => {
     try {
@@ -59,7 +61,8 @@ function Chatbot({ onUpdateSources }: ChatbotProps) {
         messages: updatedMessages.map(msg => ({
           role: msg.sender,
           content: msg.text
-        }))
+        })),
+        uuid: chatId
       }),
     })
       .then(async response => {
@@ -116,6 +119,10 @@ function Chatbot({ onUpdateSources }: ChatbotProps) {
                       url: source.url || ''
                     }));
                     onUpdateSources(newSources);
+                  }
+                } else if (currentEvent === 'set_uuid') {
+                  if (json.content) {
+                    setChatId(json.content);
                   }
                 }
               } catch (e) {

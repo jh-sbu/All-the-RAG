@@ -20,6 +20,7 @@ from db.database import (
     add_test_user,
     create_example_chat,
     create_new_chat,
+    get_all_user_chats,
     get_user,
     get_user_chat,
     store_chat_message,
@@ -157,16 +158,24 @@ def delete_account():
     return jsonify({"error": "Not yet implemented"}), 405
 
 
-@backend.route("/past_chats", methods=["GET"])
-def get_histories():
-    # return not_implemented_error
-    return jsonify({"error": "Not yet implemented"}), 405
+# @backend.route("/past_chats", methods=["GET"])
+# def get_histories():
+# return not_implemented_error
+# return jsonify({"error": "Not yet implemented"}), 405
 
 
 @backend.route("/chat_history", methods=["GET"])
 def get_chat_history():
-    # return not_implemented_error
-    return jsonify({"error": "Not yet implemented"}), 405
+    logger.warning("WARNING! WARNING! Test user account enabled!")
+    user_email = "test_email@example.com"
+
+    try:
+        chats = get_all_user_chats(db_url=database_url, user_email=user_email)
+
+        return jsonify({"chats": chats})
+
+    except NoResultFound:
+        return jsonify({"error": "Invalid user"}), 404
 
 
 @backend.route("/delete_chat", methods=["POST"])

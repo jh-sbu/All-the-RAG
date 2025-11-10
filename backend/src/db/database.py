@@ -1,4 +1,5 @@
-from typing import List
+from re import U
+from typing import List, Sequence
 import uuid
 from flask import jsonify
 from sqlalchemy import (
@@ -89,7 +90,27 @@ class Message(Base):
         return f"Chat(id={self.id!r}, chat={self.chat!r}, chat_id={self.chat_id!r}, contents={self.contents!r})"
 
 
+def get_all_user_chats(db_url: str, user_email: str) -> Sequence[Chat]:
+    """Return all chats associated with the given user email.
+
+    Raises:
+        NoResultFound: User with the given email does not exist.
+    """
+    engine = create_engine(db_url, echo=True)
+
+    with Session(engine) as session:
+        users_stmt = select(User).where(User.email == user_email)
+
+        user = session.execute(users_stmt).scalar_one()
+
+        chats_stmt = select(Chat).where(Chat.user == user)
+
+        chats = session.execute(chats_stmt).scalars().all()
+        return chats
+
+
 def store_chat_message(db_url: str, role: str, contents: str, chat_id: uuid.UUID):
+    """Store a new message in the specified chat"""
     engine = create_engine(db_url, echo=True)
 
     with Session(engine) as session:
@@ -107,6 +128,7 @@ def store_chat_message(db_url: str, role: str, contents: str, chat_id: uuid.UUID
 
 
 def get_user_chat(db_url: str, chat_id: uuid.UUID, user_email: str) -> Chat:
+    """Retrieve a specific chat owned by user"""
     engine = create_engine(db_url, echo=True)
 
     with Session(engine) as session:

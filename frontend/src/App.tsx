@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import Chatbot from './Components/Chatbot';
 import PreviousChatsSidebar from './Components/PreviousChatsSidebar';
@@ -32,6 +32,20 @@ const App: React.FC = () => {
       messages: []
     }
   ]);
+
+  useEffect(() => {
+    const fetchChatHistory = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URI}/chat_history`);
+        const data = await response.json();
+        console.log('Chat history:', data);
+      } catch (error) {
+        console.error('Error fetching chat history:', error);
+      }
+    };
+
+    fetchChatHistory();
+  }, []);
 
   return (
     <div className="container">
