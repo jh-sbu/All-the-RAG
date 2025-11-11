@@ -19,6 +19,7 @@ from sqlalchemy.orm import (
     Session,
     mapped_column,
     relationship,
+    selectinload,
 )
 
 
@@ -90,7 +91,7 @@ class Message(Base):
         return f"Chat(id={self.id!r}, chat={self.chat!r}, chat_id={self.chat_id!r}, contents={self.contents!r})"
 
 
-def get_all_user_chats(db_url: str, user_email: str) -> Sequence[Chat]:
+def get_all_user_chats(db_url: str, user_email: str) -> list[dict]:
     """Return all chats associated with the given user email.
 
     Raises:
@@ -99,14 +100,33 @@ def get_all_user_chats(db_url: str, user_email: str) -> Sequence[Chat]:
     engine = create_engine(db_url, echo=True)
 
     with Session(engine) as session:
-        users_stmt = select(User).where(User.email == user_email)
+        user = session.execute(
+            select(User).where(User.email == user_email)
+        ).scalar_one()
 
-        user = session.execute(users_stmt).scalar_one()
+        chats = (
+            session.execute(
+                select(Chat)
+                .where(Chat.user == user)
+                .options(selectinload(Chat.user), selectinload(Chat.messages))
+            )
+            .scalars()
+            .all()
+        )
 
-        chats_stmt = select(Chat).where(Chat.user == user)
+        result = [
+            {
+                "id": str(chat.id),
+                "user_email": str(chat.user.email),
+                "messages": [
+                    {"id": msg.id, "role": msg.role, "contents": msg.contents}
+                    for msg in chat.messages
+                ],
+            }
+            for chat in chats
+        ]
 
-        chats = session.execute(chats_stmt).scalars().all()
-        return chats
+        return result
 
 
 def store_chat_message(db_url: str, role: str, contents: str, chat_id: uuid.UUID):
