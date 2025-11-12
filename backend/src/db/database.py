@@ -121,6 +121,7 @@ def get_all_user_chats(db_url: str, user_email: str) -> list[dict]:
             {
                 "id": str(chat.id),
                 "user_email": str(chat.user.email),
+                "title": str(chat.title),
                 "messages": [
                     {"id": msg.id, "role": msg.role, "contents": msg.contents}
                     for msg in chat.messages
@@ -238,7 +239,7 @@ def create_example_chat(db_url: str):
                             role="Test role please ignore",
                         )
                     ],
-                    title="New Chat",
+                    title="Previous Chat",
                     user_issuer=user_id[0],
                     user_sub=user_id[1],
                 )
@@ -275,7 +276,7 @@ def create_new_chat(db_url: str, initial_message: str, user: User):
             new_chat = Chat(
                 user_issuer=user.issuer,
                 user_sub=user.sub,
-                title="New Chat",
+                title="Previous Chat",
                 messages=[Message(initial_message, "user")],
             )
             session.add(new_chat)

@@ -97,7 +97,7 @@ database_url = os.environ.get("DATABASE_URL", "sqlite+pysqlite:///example.db")
 logger.debug(f"VDB provider read as: {vdb_provider}")
 logger.debug(f"Created vector db interface of type {type(vector_db)}")
 
-system_prompt = "You are a helpful assistant that assists users with the All the Mods modpacks for the video game Minecraft. Another model will provide you with whatever context it can about the user's query. Read the provided context and use it to respond to the user's query. Be concise - your job is to find the relevant information in the given context, not repeat everything you see word for word."
+system_prompt = "You are a helpful assistant that assists users with the All the Mods modpacks for the video game Minecraft. Another model will provide you with whatever context it can about the user's query. Read the provided context and use it to respond to the user's query. Do not accuse the user of being the one to provide you with the contexts - it is another bot that does that and users do not like being accused of things they didn't do. Be concise - your job is to find the relevant information in the given context, not repeat everything you see word for word."
 
 completion_provider = os.environ.get("COMPLETION_PROVIDER")
 logger.info(f"Setting up completion provider {completion_provider}")
@@ -281,11 +281,14 @@ def send_message():
                         chat_uuid,
                         # uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
                     )
+                logger.debug("Yup here")
                 # TODO
                 logger.warning("WARNING! WARNING! UPLOADING TO DB NOT YET SUPPORTED!")
                 logger.warning("WARNING! WARNING! UPLOADING TO DB NOT YET SUPPORTED!")
                 logger.warning("(It still just uses the test user!)")
+                logger.debug("but not here?")
 
+        logger.debug("Maybe here even")
         return Response(
             stream_with_context(stream_and_store()),
             mimetype="text/event-stream",

@@ -14,8 +14,8 @@ const PreviousChatsSidebar: React.FC<PreviousChatsSidebarProps> = ({ chats }) =>
       <h2>Previous Chats</h2>
       {chats.map((chat) => (
         <ChatCard
-          key={chat.chat_title}
-          title={chat.chat_title}
+          key={chat.id}
+          title={chat.title}
         />
       ))}
     </div>

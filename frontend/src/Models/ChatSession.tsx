@@ -8,6 +8,6 @@ export type UUID = string & { readonly [__uuidBrand]: 'UUID' };
 
 export interface IChatSession {
   id: UUID;
-  chat_title: string,
+  title: string,
   messages: IMessage[]
 }
