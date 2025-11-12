@@ -40,6 +40,11 @@ class Llama(Provider):
 
         self.model = get_model_name()
 
+    def get_chat_title(
+        self, contents: list[dict[str, str]]
+    ) -> Generator[tuple[str, str], None, None]:
+        raise NotImplementedError
+
     def request(
         self, contexts: list[Context], messages: list[dict[str, str]]
     ) -> Generator:

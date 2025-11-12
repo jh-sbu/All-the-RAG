@@ -158,12 +158,6 @@ def delete_account():
     return jsonify({"error": "Not yet implemented"}), 405
 
 
-# @backend.route("/past_chats", methods=["GET"])
-# def get_histories():
-# return not_implemented_error
-# return jsonify({"error": "Not yet implemented"}), 405
-
-
 @backend.route("/chat_history", methods=["GET"])
 def get_chat_history():
     logger.warning("WARNING! WARNING! Test user account enabled!")
@@ -176,6 +170,14 @@ def get_chat_history():
 
     except NoResultFound:
         return jsonify({"error": "Invalid user"}), 404
+
+
+@backend.route("/chat_history/<int:chat_id>", methods=["GET"])
+def get_chat_messages(chat_id):
+    logger.warning("WARNING! WARNING! Test user account enabled!")
+    user_email = "test_email@example.com"
+
+    return jsonify({"error": "Not implemented yet"}), 405
 
 
 @backend.route("/delete_chat", methods=["POST"])
@@ -241,7 +243,6 @@ def send_message():
                     "user",
                     full_message,
                     chat_uuid,
-                    # uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
                 )
 
         contexts = vector_db.get_nearest(3, full_message)

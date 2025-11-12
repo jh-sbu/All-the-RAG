@@ -11,6 +11,7 @@ from sqlalchemy import (
     create_engine,
     select,
 )
+from sqlalchemy.engine import create
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -61,6 +62,8 @@ class Chat(Base):
 
     user_issuer: Mapped[str] = mapped_column(String(255))
     user_sub: Mapped[str] = mapped_column(String(255))
+
+    title: Mapped[str] = mapped_column(String(255))
 
     # Apparently there is no ORM only version of this?
     __table_args__ = (
@@ -129,6 +132,29 @@ def get_all_user_chats(db_url: str, user_email: str) -> list[dict]:
         return result
 
 
+def get_all_chat_messages(
+    db_url: str, chat_id: uuid.UUID, user_email: str
+) -> list[dict]:
+    """
+    Get all chat messages associated with the specified chat
+    Raises:
+        NoResultFound: Chat with the given UUID does not exist, or
+        user with the given email address does not exist
+    """
+    engine = create_engine(db_url, echo=True)
+
+    with Session(engine) as session:
+        user = session.execute(
+            select(User).where(User.email == user_email)
+        ).scalar_one()
+
+        chat = session.execute(select(Chat).where(Chat.id == chat_id)).scalar_one()
+
+        if chat.user != user:
+            raise PermissionError("User not authorized to access this chat")
+    raise NotImplementedError
+
+
 def store_chat_message(db_url: str, role: str, contents: str, chat_id: uuid.UUID):
     """Store a new message in the specified chat"""
     engine = create_engine(db_url, echo=True)
@@ -153,13 +179,11 @@ def get_user_chat(db_url: str, chat_id: uuid.UUID, user_email: str) -> Chat:
 
     with Session(engine) as session:
         try:
-            user_stmt = select(User).where(User.email == user_email)
+            user = session.execute(
+                select(User).where(User.email == user_email)
+            ).scalar_one()
 
-            user = session.execute(user_stmt).scalar_one()
-
-            chat_stmt = select(Chat).where(Chat.id == chat_id)
-
-            chat = session.execute(chat_stmt).scalar_one()
+            chat = session.execute(select(Chat).where(Chat.id == chat_id)).scalar_one()
 
             # User tries to access a chat that is not theirs
             # Don't tell them they hit a real chat that isn't theirs,
@@ -214,6 +238,7 @@ def create_example_chat(db_url: str):
                             role="Test role please ignore",
                         )
                     ],
+                    title="New Chat",
                     user_issuer=user_id[0],
                     user_sub=user_id[1],
                 )
@@ -247,7 +272,12 @@ def create_new_chat(db_url: str, initial_message: str, user: User):
 
     with Session(engine) as session:
         try:
-            new_chat = Chat(user.issuer, user.sub, [Message(initial_message, "user")])
+            new_chat = Chat(
+                user_issuer=user.issuer,
+                user_sub=user.sub,
+                title="New Chat",
+                messages=[Message(initial_message, "user")],
+            )
             session.add(new_chat)
             session.commit()
             session.refresh(new_chat)
