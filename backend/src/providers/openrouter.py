@@ -53,6 +53,13 @@ class OpenRouter(Provider):
             "content": system_prompt,
         }
 
+    def get_chat_title(
+        self, contents: list[dict[str, str]]
+    ) -> Generator[tuple[str, str], None, None]:
+        # TODO
+        logger.debug("Generating chat title for new chat")
+        raise NotImplementedError
+
     def request(
         self, contexts: list[Context], messages: list[dict[str, str]]
     ) -> Generator[tuple[str, str], None, None]:
@@ -109,10 +116,6 @@ class OpenRouter(Provider):
                 content = chunk.choices[0].delta.content
                 if content is None:
                     content = ""
-                # logger.info(f"New content: {content}")
-                # if content != "":
-                # yield f"event: new_chunk\ndata: {json.dumps({'content': content})}\n\n"
-                # yield "new_chunk", json.dumps({"content": content})
                 yield "new_chunk", content
 
         return generate()

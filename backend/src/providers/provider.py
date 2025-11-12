@@ -16,6 +16,15 @@ class Provider(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def get_chat_title(
+        self, contents: list[dict[str, str]]
+    ) -> Generator[tuple[str, str], None, None]:
+        """
+        Use this provider to generate a chat title for a given chat session
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def system_prompt(self, prompt: str):
         """
         Set the system prompt

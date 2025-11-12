@@ -280,7 +280,10 @@ def send_message():
                         chat_uuid,
                         # uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
                     )
+                # TODO
                 logger.warning("WARNING! WARNING! UPLOADING TO DB NOT YET SUPPORTED!")
+                logger.warning("WARNING! WARNING! UPLOADING TO DB NOT YET SUPPORTED!")
+                logger.warning("(It still just uses the test user!)")
 
         return Response(
             stream_with_context(stream_and_store()),
