@@ -1,13 +1,14 @@
 import React from 'react';
 import ChatCard from './ChatCard';
 import './PreviousChatsSidebar.css';
-import { IChatSession } from '../Models/ChatSession';
+import { IChatSession, UUID } from '../Models/ChatSession';
 
 interface PreviousChatsSidebarProps {
   chats: IChatSession[];
+  onDeleteChat?: (chatId: UUID) => void;
 }
 
-const PreviousChatsSidebar: React.FC<PreviousChatsSidebarProps> = ({ chats }) => {
+const PreviousChatsSidebar: React.FC<PreviousChatsSidebarProps> = ({ chats, onDeleteChat }) => {
   return (
     <div className="previous-chats-sidebar">
       <ChatCard title="New Chat" />
@@ -16,6 +17,8 @@ const PreviousChatsSidebar: React.FC<PreviousChatsSidebarProps> = ({ chats }) =>
         <ChatCard
           key={chat.id}
           title={chat.title}
+          chatId={chat.id}
+          onDelete={onDeleteChat}
         />
       ))}
     </div>

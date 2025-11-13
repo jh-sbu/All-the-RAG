@@ -50,9 +50,13 @@ const App: React.FC = () => {
     fetchChatHistory();
   }, []);
 
+  const handleDeleteChat = (chatId: UUID) => {
+    _setChats(prevChats => prevChats.filter(chat => chat.id !== chatId));
+  };
+
   return (
     <div className="container">
-      <PreviousChatsSidebar chats={chats} />
+      <PreviousChatsSidebar chats={chats} onDeleteChat={handleDeleteChat} />
       <div className="main-content">
         <Chatbot onUpdateSources={setSources} />
       </div>
