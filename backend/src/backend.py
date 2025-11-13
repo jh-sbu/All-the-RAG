@@ -111,6 +111,10 @@ else:
     raise ValueError("Specified completion provider is not supported")
 
 
+# TODO - Remove this when testing is done!
+user_email = "test_email@example.com"
+
+
 @backend.route("/register", methods=["POST"])
 def register():
     # return not_implemented_error
@@ -180,8 +184,20 @@ def get_chat_messages(chat_id):
     return jsonify({"error": "Not implemented yet"}), 405
 
 
-@backend.route("/delete_chat", methods=["POST"])
+@backend.route("/delete_chat", methods=["DELETE"])
 def delete_chat():
+    chat_id = request.args.get("chat_id")
+
+    # TODO
+    user = get_user(database_url, user_email=user_email)
+
+    if user is None:
+        return jsonify({"error": "You must be logged in to delete a chat"}), 401
+
+    if not chat_id:
+        return jsonify({"error": "No chat ID specified"}), 400
+
+    logger.info(f"User attempting to delete chat {chat_id}")
     return jsonify({"error": "Not yet implemented"}), 405
 
 
@@ -190,7 +206,6 @@ def send_message():
     data = request.get_json()
 
     # TODO
-    user_email = "test_email@example.com"
     user = get_user(database_url, user_email)
 
     if data is None or "messages" not in data.keys():

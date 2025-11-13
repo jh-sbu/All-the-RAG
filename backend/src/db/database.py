@@ -175,28 +175,25 @@ def store_chat_message(db_url: str, role: str, contents: str, chat_id: uuid.UUID
 
 
 def get_user_chat(db_url: str, chat_id: uuid.UUID, user_email: str) -> Chat:
-    """Retrieve a specific chat owned by user"""
+    """Retrieve a specific chat owned by user
+    Raises: NoResultFound if user or chat cannot be found"""
     engine = create_engine(db_url, echo=True)
 
     with Session(engine) as session:
-        try:
-            user = session.execute(
-                select(User).where(User.email == user_email)
-            ).scalar_one()
+        user = session.execute(
+            select(User).where(User.email == user_email)
+        ).scalar_one()
 
-            chat = session.execute(select(Chat).where(Chat.id == chat_id)).scalar_one()
+        chat = session.execute(select(Chat).where(Chat.id == chat_id)).scalar_one()
 
-            # User tries to access a chat that is not theirs
-            # Don't tell them they hit a real chat that isn't theirs,
-            # but leave this logic separate to make identifying potential
-            # troublemakers easier
-            if user.sub != chat.user_sub or user.issuer != chat.user_issuer:
-                raise PermissionError("User is not the owner of the specified chat")
+        # User tries to access a chat that is not theirs
+        # Don't tell them they hit a real chat that isn't theirs,
+        # but leave this logic separate to make identifying potential
+        # troublemakers easier
+        if user.sub != chat.user_sub or user.issuer != chat.user_issuer:
+            raise PermissionError("User is not the owner of the specified chat")
 
-            return chat
-
-        except NoResultFound:
-            raise
+        return chat
 
 
 def add_test_user(db_url: str):
@@ -288,6 +285,17 @@ def create_new_chat(db_url: str, initial_message: str, user: User):
         except IntegrityError:
             session.rollback()
             return None
+
+
+def delete_chat(db_url: str, chat_id: uuid.UUID, user_email: str):
+    engine = create_engine(db_url, echo=True)
+
+    with Session(engine) as session:
+        chat_to_delete = session.execute(
+            select(Chat).where(Chat.id == chat_id).where(Chat.user.email == user_email)
+        ).scalar_one()
+
+        raise NotImplementedError
 
 
 def add_example_message_to_chat(db_url: str):
