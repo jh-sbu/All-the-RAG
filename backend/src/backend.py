@@ -12,7 +12,8 @@ import os
 
 import requests
 from sqlalchemy import Uuid
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy import exc
+from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from atr_logger import get_logger, set_log_level
 from db.database import (
@@ -20,6 +21,7 @@ from db.database import (
     add_test_user,
     create_example_chat,
     create_new_chat,
+    delete_user_chat,
     get_all_user_chats,
     get_user,
     get_user_chat,
@@ -112,7 +114,7 @@ else:
 
 
 # TODO - Remove this when testing is done!
-user_email = "test_email@example.com"
+test_user_email = "test_email@example.com"
 
 
 @backend.route("/register", methods=["POST"])
@@ -179,7 +181,7 @@ def get_chat_history():
 @backend.route("/chat_history/<int:chat_id>", methods=["GET"])
 def get_chat_messages(chat_id):
     logger.warning("WARNING! WARNING! Test user account enabled!")
-    user_email = "test_email@example.com"
+    user_email = test_user_email
 
     return jsonify({"error": "Not implemented yet"}), 405
 
@@ -188,17 +190,34 @@ def get_chat_messages(chat_id):
 def delete_chat():
     chat_id = request.args.get("chat_id")
 
-    # TODO
-    user = get_user(database_url, user_email=user_email)
+    user_email = test_user_email
 
-    if user is None:
-        return jsonify({"error": "You must be logged in to delete a chat"}), 401
+    logger.info(f"User {user_email} attempting to delete chat {chat_id}")
 
     if not chat_id:
         return jsonify({"error": "No chat ID specified"}), 400
 
-    logger.info(f"User attempting to delete chat {chat_id}")
-    return jsonify({"error": "Not yet implemented"}), 405
+    try:
+        chat_id = uuid.UUID(chat_id)
+    except ValueError:
+        return jsonify({"error": "Could not parse chat ID"}), 400
+
+    try:
+        delete_user_chat(database_url, chat_id=chat_id, user_email=user_email)
+    except IntegrityError:
+        return jsonify({"error": "Error updating database"}), 500
+    except NoResultFound:
+        return jsonify({"error": "Could not locate the specified record"}), 404
+    except PermissionError:
+        logger.info(
+            f"User {user_email} attempted to access chat {chat_id} but is NOT the owner of that chat"
+        )
+        # Don't want to allow enumerating existing chats so return the same as though
+        # the record wasn't found, but we do want to log this seperately to spot
+        # bad behavior more easily
+        return jsonify({"error": "Could not locate the specified record"}), 404
+
+    return "ok", 200
 
 
 @backend.route("/send_message", methods=["POST"])
@@ -206,7 +225,7 @@ def send_message():
     data = request.get_json()
 
     # TODO
-    user = get_user(database_url, user_email)
+    user = get_user(database_url, test_user_email)
 
     if data is None or "messages" not in data.keys():
         return jsonify({"error": "No user prompt received"}), 400
@@ -241,12 +260,12 @@ def send_message():
                     f"Received post request with uuid {chat_uuid}, verifying access"
                 )
                 try:
-                    chat = get_user_chat(database_url, chat_uuid, user_email)
+                    chat = get_user_chat(database_url, chat_uuid, test_user_email)
                     chat_uuid = chat.id
 
                 except PermissionError:
                     logger.warning(
-                        f"User {user_email} attempted to access chat {chat_uuid}, which is a real chat, but not theirs"
+                        f"User {test_user_email} attempted to access chat {chat_uuid}, which is a real chat, but not theirs"
                     )
                     return jsonify({"error": "Record not found"}), 404
 
