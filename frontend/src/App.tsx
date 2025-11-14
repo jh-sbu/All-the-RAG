@@ -22,7 +22,7 @@ const App: React.FC = () => {
     }
   ]);
 
-  const [chats, _setChats] = useState<IChatSession[]>([
+  const [chats, setChats] = useState<IChatSession[]>([
     {
       id: "db11010b-d2dd-429e-9a6d-09d672acad4f" as UUID,
       title: "Chat 1",
@@ -41,7 +41,7 @@ const App: React.FC = () => {
         const response = await fetch(`${import.meta.env.VITE_BACKEND_URI}/api/chat`);
         const data = await response.json();
         console.log('Chat history:', data);
-        _setChats(data.chats);
+        setChats(data.chats);
       } catch (error) {
         console.error('Error fetching chat history:', error);
       }
@@ -51,7 +51,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleDeleteChat = (chatId: UUID) => {
-    _setChats(prevChats => prevChats.filter(chat => chat.id !== chatId));
+    setChats((prevChats: IChatSession[]) => prevChats.filter((chat: IChatSession) => chat.id !== chatId));
   };
 
   return (
