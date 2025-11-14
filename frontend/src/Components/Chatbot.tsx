@@ -6,9 +6,10 @@ import { UUID } from '../Models/ChatSession';
 
 interface ChatbotProps {
   onUpdateSources: (sources: ISource[]) => void;
+  onRefreshChats: () => Promise<void>;
 }
 
-function Chatbot({ onUpdateSources }: ChatbotProps) {
+function Chatbot({ onUpdateSources, onRefreshChats }: ChatbotProps) {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -121,8 +122,8 @@ function Chatbot({ onUpdateSources }: ChatbotProps) {
                     onUpdateSources(newSources);
                   }
                 } else if (currentEvent === 'set_uuid') {
-                  if (json.content) {
-                    setChatId(json.content);
+                  if (json.new_uuid) {
+                    setChatId(json.new_uuid);
                   }
                 }
               } catch (e) {
@@ -149,7 +150,11 @@ function Chatbot({ onUpdateSources }: ChatbotProps) {
           return prev;
         });
       })
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        setIsLoading(false);
+        // TODO - this is extraneous after the first message of a new chat, fix this
+        onRefreshChats();
+      });
   };
 
   return (

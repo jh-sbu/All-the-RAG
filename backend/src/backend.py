@@ -293,7 +293,7 @@ def send_message():
             # is not None, if we check chat_uuid here it complains
             # about chat_uuid below in the finally block
             if data["uuid"] == "None" and user is not None:
-                yield f"event: set_uuid\ndata: {json.dumps({'content': str(chat_uuid)})}\n\n"
+                yield f"event: set_uuid\ndata: {json.dumps({'new_uuid': str(chat_uuid)})}\n\n"
 
             chunks: list[str] = []
 
@@ -316,6 +316,7 @@ def send_message():
                         chat_uuid,
                         # uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
                     )
+
                 # TODO
                 logger.warning("WARNING! WARNING! UPLOADING TO DB NOT YET SUPPORTED!")
                 logger.warning("WARNING! WARNING! UPLOADING TO DB NOT YET SUPPORTED!")

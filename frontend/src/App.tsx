@@ -35,18 +35,18 @@ const App: React.FC = () => {
     }
   ]);
 
-  useEffect(() => {
-    const fetchChatHistory = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URI}/api/chat`);
-        const data = await response.json();
-        console.log('Chat history:', data);
-        setChats(data.chats);
-      } catch (error) {
-        console.error('Error fetching chat history:', error);
-      }
-    };
+  const fetchChatHistory = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URI}/api/chat`);
+      const data = await response.json();
+      console.log('Chat history:', data);
+      setChats(data.chats);
+    } catch (error) {
+      console.error('Error fetching chat history:', error);
+    }
+  };
 
+  useEffect(() => {
     fetchChatHistory();
   }, []);
 
@@ -58,7 +58,7 @@ const App: React.FC = () => {
     <div className="container">
       <PreviousChatsSidebar chats={chats} onDeleteChat={handleDeleteChat} />
       <div className="main-content">
-        <Chatbot onUpdateSources={setSources} />
+        <Chatbot onUpdateSources={setSources} onRefreshChats={fetchChatHistory} />
       </div>
       <SourcesSidebar sources={sources} />
     </div>
