@@ -52,7 +52,7 @@ function Chatbot({ onUpdateSources }: ChatbotProps) {
     setMessages(prev => [...prev, assistantMessage]);
 
     // Stream response from backend
-    fetch(`${import.meta.env.VITE_STREAMING_RESPONSE_URI}/send_message`, {
+    fetch(`${import.meta.env.VITE_STREAMING_RESPONSE_URI}/api/message`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

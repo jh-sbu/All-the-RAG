@@ -221,7 +221,7 @@ def delete_chat():
     return "ok", 200
 
 
-@backend.route("/send_message", methods=["POST"])
+@backend.route("/api/message", methods=["POST"])
 def send_message():
     data = request.get_json()
 
