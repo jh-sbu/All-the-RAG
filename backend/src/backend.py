@@ -20,8 +20,8 @@ from db.database import (
     add_example_message_to_chat,
     add_test_user,
     create_example_chat,
-    create_new_chat,
-    delete_user_chat,
+    db_create_chat,
+    db_delete_chat,
     get_all_user_chats,
     get_user,
     get_user_chat,
@@ -203,7 +203,7 @@ def delete_chat():
         return jsonify({"error": "Could not parse chat ID"}), 400
 
     try:
-        delete_user_chat(database_url, chat_id=chat_id, user_email=user_email)
+        db_delete_chat(database_url, chat_id=chat_id, user_email=user_email)
     except IntegrityError:
         return jsonify({"error": "Error updating database"}), 500
     except NoResultFound:
@@ -248,7 +248,7 @@ def send_message():
                 logger.debug(
                     "Received post request with no chat_uuid, creating new one"
                 )
-                chat = create_new_chat(database_url, full_message, user)
+                chat = db_create_chat(database_url, full_message, user)
                 if chat is None:
                     return jsonify({"error": "Failed to save user chat"}), 500
 

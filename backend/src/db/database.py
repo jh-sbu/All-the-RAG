@@ -94,7 +94,7 @@ class Message(Base):
         return f"Chat(id={self.id!r}, chat={self.chat!r}, chat_id={self.chat_id!r}, contents={self.contents!r})"
 
 
-def get_all_user_chats(db_url: str, user_email: str) -> list[dict]:
+def db_get_all_chats(db_url: str, user_email: str) -> list[dict]:
     """Return all chats associated with the given user email.
 
     Raises:
@@ -133,9 +133,7 @@ def get_all_user_chats(db_url: str, user_email: str) -> list[dict]:
         return result
 
 
-def get_all_chat_messages(
-    db_url: str, chat_id: uuid.UUID, user_email: str
-) -> list[dict]:
+def db_get_all_messages(db_url: str, chat_id: uuid.UUID, user_email: str) -> list[dict]:
     """
     Get all chat messages associated with the specified chat
     Raises:
@@ -156,7 +154,7 @@ def get_all_chat_messages(
     raise NotImplementedError
 
 
-def store_chat_message(db_url: str, role: str, contents: str, chat_id: uuid.UUID):
+def db_store_message(db_url: str, role: str, contents: str, chat_id: uuid.UUID):
     """Store a new message in the specified chat"""
     engine = create_engine(db_url, echo=True)
 
@@ -174,7 +172,7 @@ def store_chat_message(db_url: str, role: str, contents: str, chat_id: uuid.UUID
             return jsonify({"error": "Could not add new message"}), 409
 
 
-def get_user_chat(db_url: str, chat_id: uuid.UUID, user_email: str) -> Chat:
+def db_get_chat(db_url: str, chat_id: uuid.UUID, user_email: str) -> Chat:
     """Retrieve a specific chat owned by user
     Raises: NoResultFound if user or chat cannot be found"""
     engine = create_engine(db_url, echo=True)
@@ -194,6 +192,114 @@ def get_user_chat(db_url: str, chat_id: uuid.UUID, user_email: str) -> Chat:
             raise PermissionError("User is not the owner of the specified chat")
 
         return chat
+
+
+def db_get_user(db_url: str, user_email: str) -> User | None:
+    engine = create_engine(db_url, echo=True)
+
+    with Session(engine) as session:
+        try:
+            user_stmt = select(User).where(User.email == user_email)
+            user = session.execute(user_stmt).scalar_one()
+            return user
+        except NoResultFound:
+            return None
+
+
+def db_create_chat(db_url: str, initial_message: str, user: User):
+    engine = create_engine(db_url, echo=True)
+
+    # raise NotImplementedError
+
+    with Session(engine) as session:
+        try:
+            new_chat = Chat(
+                user_issuer=user.issuer,
+                user_sub=user.sub,
+                title="Previous Chat",
+                messages=[Message(initial_message, "user")],
+            )
+            session.add(new_chat)
+            session.commit()
+            session.refresh(new_chat)
+
+            return new_chat
+
+        except IntegrityError:
+            session.rollback()
+            return None
+
+
+def db_delete_user(db_url: str, user_email: str):
+    """Delete the specified user.
+    Does NOT do any auth checks, that
+    should be handled separately.
+    """
+    engine = create_engine(db_url)
+
+    with Session(engine) as session:
+        user = session.execute(
+            select(User).where(User.email == user_email)
+        ).scalar_one()
+        session.delete(user)
+
+        session.commit()
+
+
+def db_delete_chat(db_url: str, chat_id: uuid.UUID, user_email: str):
+    """Delete the specified chat.
+    Returns: True if the chat was successfully deleted; false otherwise
+    Raises:
+        PermissionError: If the user does not own the specified chat
+    """
+    engine = create_engine(db_url, echo=True)
+
+    with Session(engine) as session:
+        user = session.execute(
+            select(User).where(User.email == user_email)
+        ).scalar_one()
+
+        chat_to_delete = session.execute(
+            select(Chat).where(Chat.id == chat_id)
+        ).scalar_one()
+
+        if (
+            chat_to_delete.user_issuer != user.issuer
+            or chat_to_delete.user_sub != user.sub
+        ):
+            raise PermissionError("User is not the owner of the specified chat")
+
+        session.delete(chat_to_delete)
+        session.commit()
+
+
+def add_example_message_to_chat(db_url: str):
+    engine = create_engine(db_url, echo=True)
+
+    with Session(engine) as session:
+        try:
+            test_email_addr = "test_email@example.com"
+            chat_id = session.execute(
+                select(Chat.id).join(User).where(User.email == test_email_addr).limit(1)
+            ).scalar_one()
+
+            session.add(
+                Message(
+                    chat_id=chat_id,
+                    contents="New test message!",
+                    role="Test role please ignore",
+                )
+            )
+
+            session.commit()
+
+            return "ok", 200
+
+        except IntegrityError:
+            session.rollback()
+            return jsonify(
+                {"error": "Could not add example message to example chat"}
+            ), 409
 
 
 def add_test_user(db_url: str):
@@ -249,101 +355,3 @@ def create_example_chat(db_url: str):
         except IntegrityError:
             session.rollback()
             return jsonify({"error": "Could not create example chat"}), 409
-
-
-def get_user(db_url: str, user_email: str) -> User | None:
-    engine = create_engine(db_url, echo=True)
-
-    with Session(engine) as session:
-        try:
-            user_stmt = select(User).where(User.email == user_email)
-            user = session.execute(user_stmt).scalar_one()
-            return user
-        except NoResultFound:
-            return None
-
-
-def create_new_chat(db_url: str, initial_message: str, user: User):
-    engine = create_engine(db_url, echo=True)
-
-    # raise NotImplementedError
-
-    with Session(engine) as session:
-        try:
-            new_chat = Chat(
-                user_issuer=user.issuer,
-                user_sub=user.sub,
-                title="Previous Chat",
-                messages=[Message(initial_message, "user")],
-            )
-            session.add(new_chat)
-            session.commit()
-            session.refresh(new_chat)
-
-            return new_chat
-
-        except IntegrityError:
-            session.rollback()
-            return None
-
-
-def delete_user_chat(db_url: str, chat_id: uuid.UUID, user_email: str):
-    """Delete the specified chat.
-    Returns: True if the chat was successfully deleted; false otherwise
-    Raises:
-        PermissionError: If the user does not own the specified chat
-    """
-    engine = create_engine(db_url, echo=True)
-
-    with Session(engine) as session:
-        try:
-            user = session.execute(
-                select(User).where(User.email == user_email)
-            ).scalar_one()
-
-            chat_to_delete = session.execute(
-                select(Chat).where(Chat.id == chat_id)
-            ).scalar_one()
-
-            if (
-                chat_to_delete.user_issuer != user.issuer
-                or chat_to_delete.user_sub != user.sub
-            ):
-                raise PermissionError("User is not the owner of the specified chat")
-
-            session.delete(chat_to_delete)
-            session.commit()
-            return True
-
-        except IntegrityError:
-            session.rollback()
-            raise
-
-
-def add_example_message_to_chat(db_url: str):
-    engine = create_engine(db_url, echo=True)
-
-    with Session(engine) as session:
-        try:
-            test_email_addr = "test_email@example.com"
-            chat_id = session.execute(
-                select(Chat.id).join(User).where(User.email == test_email_addr).limit(1)
-            ).scalar_one()
-
-            session.add(
-                Message(
-                    chat_id=chat_id,
-                    contents="New test message!",
-                    role="Test role please ignore",
-                )
-            )
-
-            session.commit()
-
-            return "ok", 200
-
-        except IntegrityError:
-            session.rollback()
-            return jsonify(
-                {"error": "Could not add example message to example chat"}
-            ), 409
