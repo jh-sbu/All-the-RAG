@@ -194,16 +194,18 @@ def db_get_chat(db_url: str, chat_id: uuid.UUID, user_email: str) -> Chat:
         return chat
 
 
-def db_get_user(db_url: str, user_email: str) -> User | None:
+def db_get_user(db_url: str, user_email: str) -> User:
+    """
+    Get the user with the given email.
+    Raises:
+        NoResultFound: If there is no user with the given email.
+    """
     engine = create_engine(db_url, echo=True)
 
     with Session(engine) as session:
-        try:
-            user_stmt = select(User).where(User.email == user_email)
-            user = session.execute(user_stmt).scalar_one()
-            return user
-        except NoResultFound:
-            return None
+        user_stmt = select(User).where(User.email == user_email)
+        user = session.execute(user_stmt).scalar_one()
+        return user
 
 
 def db_create_chat(db_url: str, initial_message: str, user: User):

@@ -22,10 +22,10 @@ from db.database import (
     create_example_chat,
     db_create_chat,
     db_delete_chat,
-    get_all_user_chats,
-    get_user,
-    get_user_chat,
-    store_chat_message,
+    db_get_all_chats,
+    db_get_user,
+    db_get_chat,
+    db_store_message,
 )
 from vdb.amazons3vector import AmazonS3Vector
 from vdb.faiss import FaissIndex
@@ -170,7 +170,7 @@ def get_chat_history():
     user_email = "test_email@example.com"
 
     try:
-        chats = get_all_user_chats(db_url=database_url, user_email=user_email)
+        chats = db_get_all_chats(db_url=database_url, user_email=user_email)
 
         return jsonify({"chats": chats})
 
@@ -225,7 +225,10 @@ def send_message():
     data = request.get_json()
 
     # TODO
-    user = get_user(database_url, test_user_email)
+    try:
+        user = db_get_user(database_url, test_user_email)
+    except NoResultFound:
+        user = None
 
     if data is None or "messages" not in data.keys():
         return jsonify({"error": "No user prompt received"}), 400
@@ -260,7 +263,7 @@ def send_message():
                     f"Received post request with uuid {chat_uuid}, verifying access"
                 )
                 try:
-                    chat = get_user_chat(database_url, chat_uuid, test_user_email)
+                    chat = db_get_chat(database_url, chat_uuid, test_user_email)
                     chat_uuid = chat.id
 
                 except PermissionError:
@@ -272,7 +275,7 @@ def send_message():
                 except NoResultFound:
                     return jsonify({"error": "Record not found"}), 404
 
-                store_chat_message(
+                db_store_message(
                     database_url,
                     "user",
                     full_message,
@@ -308,7 +311,7 @@ def send_message():
                 message_content = "".join(chunks)
                 logger.info(f"Received message: {message_content}")
                 if user is not None:
-                    store_chat_message(
+                    db_store_message(
                         database_url,
                         "assistant",
                         message_content,
