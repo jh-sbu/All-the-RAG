@@ -1,5 +1,4 @@
-from re import U
-from typing import List, Sequence
+from typing import List
 import uuid
 from flask import jsonify
 from sqlalchemy import (
@@ -11,8 +10,7 @@ from sqlalchemy import (
     create_engine,
     select,
 )
-from sqlalchemy.engine import create
-from sqlalchemy.exc import IntegrityError, NoResultFound
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -154,22 +152,17 @@ def db_get_all_messages(db_url: str, chat_id: uuid.UUID, user_email: str) -> lis
     raise NotImplementedError
 
 
-def db_store_message(db_url: str, role: str, contents: str, chat_id: uuid.UUID):
+def db_create_message(db_url: str, role: str, contents: str, chat_id: uuid.UUID):
     """Store a new message in the specified chat"""
     engine = create_engine(db_url, echo=True)
 
     with Session(engine) as session:
         new_message = Message(contents=contents, role=role, chat_id=chat_id)
 
-        try:
-            session.add(new_message)
-            session.commit()
+        session.add(new_message)
+        session.commit()
 
-            return "ok", 200
-
-        except IntegrityError:
-            session.rollback()
-            return jsonify({"error": "Could not add new message"}), 409
+        return new_message
 
 
 def db_get_chat(db_url: str, chat_id: uuid.UUID, user_email: str) -> Chat:
@@ -209,27 +202,21 @@ def db_get_user(db_url: str, user_email: str) -> User:
 
 
 def db_create_chat(db_url: str, initial_message: str, user: User):
+    """Create a new chat for the given user"""
     engine = create_engine(db_url, echo=True)
 
-    # raise NotImplementedError
-
     with Session(engine) as session:
-        try:
-            new_chat = Chat(
-                user_issuer=user.issuer,
-                user_sub=user.sub,
-                title="Previous Chat",
-                messages=[Message(initial_message, "user")],
-            )
-            session.add(new_chat)
-            session.commit()
-            session.refresh(new_chat)
+        new_chat = Chat(
+            user_issuer=user.issuer,
+            user_sub=user.sub,
+            title="Previous Chat",
+            messages=[Message(initial_message, "user")],
+        )
+        session.add(new_chat)
+        session.commit()
+        session.refresh(new_chat)
 
-            return new_chat
-
-        except IntegrityError:
-            session.rollback()
-            return None
+        return new_chat
 
 
 def db_delete_user(db_url: str, user_email: str):

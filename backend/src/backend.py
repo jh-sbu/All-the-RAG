@@ -25,7 +25,7 @@ from db.database import (
     db_get_all_chats,
     db_get_user,
     db_get_chat,
-    db_store_message,
+    db_create_message,
 )
 from vdb.amazons3vector import AmazonS3Vector
 from vdb.faiss import FaissIndex
@@ -96,8 +96,8 @@ vector_db = (
 
 database_url = os.environ.get("DATABASE_URL", "sqlite+pysqlite:///example.db")
 
-logger.debug(f"VDB provider read as: {vdb_provider}")
-logger.debug(f"Created vector db interface of type {type(vector_db)}")
+logger.info(f"VDB provider read as: {vdb_provider}")
+logger.info(f"Created vector db interface of type {type(vector_db)}")
 
 system_prompt = "You are a helpful assistant that assists users with the All the Mods modpacks for the video game Minecraft. Another model will provide you with whatever context it can about the user's query. Read the provided context and use it to respond to the user's query. Do not accuse the user of being the one to provide you with the contexts - it is another bot that does that and users do not like being accused of things they didn't do. Be concise - your job is to find the relevant information in the given context, not repeat everything you see word for word."
 
@@ -242,7 +242,7 @@ def send_message():
 
     chat_uuid = data["uuid"]
     full_message = " ".join([message["content"] for message in data["messages"]])
-    logger.debug(f"User message: {full_message}")
+    # logger.debug(f"User message: {full_message}")
 
     try:
         if user is not None:
@@ -275,7 +275,7 @@ def send_message():
                 except NoResultFound:
                     return jsonify({"error": "Record not found"}), 404
 
-                db_store_message(
+                db_create_message(
                     database_url,
                     "user",
                     full_message,
@@ -304,28 +304,22 @@ def send_message():
                     elif event[0] == "update_sources":
                         yield f"event: {event[0]}\ndata: {event[1]}\n\n"
 
-            except StopIteration:
-                raise
-
             finally:
                 message_content = "".join(chunks)
                 logger.info(f"Received message: {message_content}")
                 if user is not None:
-                    db_store_message(
+                    db_create_message(
                         database_url,
                         "assistant",
                         message_content,
                         chat_uuid,
                         # uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
                     )
-                logger.debug("Yup here")
                 # TODO
                 logger.warning("WARNING! WARNING! UPLOADING TO DB NOT YET SUPPORTED!")
                 logger.warning("WARNING! WARNING! UPLOADING TO DB NOT YET SUPPORTED!")
                 logger.warning("(It still just uses the test user!)")
-                logger.debug("but not here?")
 
-        logger.debug("Maybe here even")
         return Response(
             stream_with_context(stream_and_store()),
             mimetype="text/event-stream",
@@ -365,5 +359,5 @@ def test_add_example_message_to_chat():
 
 if __name__ == "__main__":
     # print(f"Database URL: {database_url}")
-    logger.debug(f"Database URL: {database_url}")
+    logger.info(f"Database URL: {database_url}")
     backend.run()
