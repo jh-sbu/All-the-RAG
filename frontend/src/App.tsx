@@ -38,7 +38,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchChatHistory = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URI}/chat_history`);
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URI}/api/chat`);
         const data = await response.json();
         console.log('Chat history:', data);
         _setChats(data.chats);

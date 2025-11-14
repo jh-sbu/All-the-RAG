@@ -29,7 +29,7 @@ function ChatCard({ title, chatId, onDelete }: ChatCardProps) {
     try {
       setIsDeleting(true);
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URI}/delete_chat?chat_id=${chatId}`,
+        `${import.meta.env.VITE_BACKEND_URI}/api/chat?chat_id=${chatId}`,
         { method: 'DELETE' }
       );
 
@@ -61,7 +61,7 @@ function ChatCard({ title, chatId, onDelete }: ChatCardProps) {
               width="16"
               height="16"
             >
-              <path d="M3 6h18v2H3V6zm2 3h14v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V9zm5-6h4v2h-4V3z"/>
+              <path d="M3 6h18v2H3V6zm2 3h14v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V9zm5-6h4v2h-4V3z" />
             </svg>
           </button>
         )}

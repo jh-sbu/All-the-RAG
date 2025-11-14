@@ -158,13 +158,14 @@ def auth_callback():
     return jsonify({"error": "Not yet implemented"}), 405
 
 
-@backend.route("/delete_account", methods=["POST"])
+@backend.route("/api/user", methods=["DELETE"])
 def delete_account():
+    logger.warning("WARNING: NOT ACTUALLY IMPLEMENTED!")
     # return not_implemented_error
     return jsonify({"error": "Not yet implemented"}), 405
 
 
-@backend.route("/chat_history", methods=["GET"])
+@backend.route("/api/chat", methods=["GET"])
 def get_chat_history():
     logger.warning("WARNING! WARNING! Test user account enabled!")
     user_email = "test_email@example.com"
@@ -178,7 +179,7 @@ def get_chat_history():
         return jsonify({"error": "Invalid user"}), 404
 
 
-@backend.route("/chat_history/<int:chat_id>", methods=["GET"])
+@backend.route("/api/chat/<int:chat_id>", methods=["GET"])
 def get_chat_messages(chat_id):
     logger.warning("WARNING! WARNING! Test user account enabled!")
     user_email = test_user_email
@@ -186,7 +187,7 @@ def get_chat_messages(chat_id):
     return jsonify({"error": "Not implemented yet"}), 405
 
 
-@backend.route("/delete_chat", methods=["DELETE"])
+@backend.route("/api/chat", methods=["DELETE"])
 def delete_chat():
     chat_id = request.args.get("chat_id")
 
