@@ -287,15 +287,37 @@ def create_new_chat(db_url: str, initial_message: str, user: User):
             return None
 
 
-def delete_chat(db_url: str, chat_id: uuid.UUID, user_email: str):
+def delete_user_chat(db_url: str, chat_id: uuid.UUID, user_email: str):
+    """Delete the specified chat.
+    Returns: True if the chat was successfully deleted; false otherwise
+    Raises:
+        PermissionError: If the user does not own the specified chat
+    """
     engine = create_engine(db_url, echo=True)
 
     with Session(engine) as session:
-        chat_to_delete = session.execute(
-            select(Chat).where(Chat.id == chat_id).where(Chat.user.email == user_email)
-        ).scalar_one()
+        try:
+            user = session.execute(
+                select(User).where(User.email == user_email)
+            ).scalar_one()
 
-        raise NotImplementedError
+            chat_to_delete = session.execute(
+                select(Chat).where(Chat.id == chat_id)
+            ).scalar_one()
+
+            if (
+                chat_to_delete.user_issuer != user.issuer
+                or chat_to_delete.user_sub != user.sub
+            ):
+                raise PermissionError("User is not the owner of the specified chat")
+
+            session.delete(chat_to_delete)
+            session.commit()
+            return True
+
+        except IntegrityError:
+            session.rollback()
+            raise
 
 
 def add_example_message_to_chat(db_url: str):
