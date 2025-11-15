@@ -6,9 +6,10 @@ interface ChatCardProps {
   title: string;
   chatId?: UUID;
   onDelete?: (chatId: UUID) => void;
+  onClick?: () => void;
 }
 
-function ChatCard({ title, chatId, onDelete }: ChatCardProps) {
+function ChatCard({ title, chatId, onDelete, onClick }: ChatCardProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -44,9 +45,15 @@ function ChatCard({ title, chatId, onDelete }: ChatCardProps) {
     }
   };
 
+  const handleCardClick = () => {
+    if (onClick) {
+      onClick();
+    }
+  };
+
   return (
     <>
-      <div className="chat-card">
+      <div className="chat-card" onClick={handleCardClick}>
         <h3>{title}</h3>
         {chatId && (
           <button

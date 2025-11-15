@@ -5,8 +5,11 @@ import PreviousChatsSidebar from './Components/PreviousChatsSidebar';
 import SourcesSidebar from './Components/SourcesSidebar';
 import { IChatSession, UUID } from './Models/ChatSession';
 import { ISource } from './Models/Source';
+import { IMessage } from './Models/Message';
 
 const App: React.FC = () => {
+  const [messages, setMessages] = useState<IMessage[]>([]);
+  const [chatId, setChatId] = useState<UUID | "None">("None");
   const [sources, setSources] = useState<ISource[]>([
     {
       number: 1,
@@ -54,11 +57,24 @@ const App: React.FC = () => {
     setChats((prevChats: IChatSession[]) => prevChats.filter((chat: IChatSession) => chat.id !== chatId));
   };
 
+  const handleNewChat = () => {
+    setMessages([]);
+    setChatId("None");
+    setSources([]);
+  };
+
   return (
     <div className="container">
-      <PreviousChatsSidebar chats={chats} onDeleteChat={handleDeleteChat} />
+      <PreviousChatsSidebar chats={chats} onDeleteChat={handleDeleteChat} onNewChat={handleNewChat} />
       <div className="main-content">
-        <Chatbot onUpdateSources={setSources} onRefreshChats={fetchChatHistory} />
+        <Chatbot
+          messages={messages}
+          setMessages={setMessages}
+          chatId={chatId}
+          setChatId={setChatId}
+          onUpdateSources={setSources}
+          onRefreshChats={fetchChatHistory}
+        />
       </div>
       <SourcesSidebar sources={sources} />
     </div>

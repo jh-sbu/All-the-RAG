@@ -5,16 +5,18 @@ import './Chatbot.css';
 import { UUID } from '../Models/ChatSession';
 
 interface ChatbotProps {
+  messages: IMessage[];
+  setMessages: React.Dispatch<React.SetStateAction<IMessage[]>>;
+  chatId: UUID | "None";
+  setChatId: React.Dispatch<React.SetStateAction<UUID | "None">>;
   onUpdateSources: (sources: ISource[]) => void;
   onRefreshChats: () => Promise<void>;
 }
 
-function Chatbot({ onUpdateSources, onRefreshChats }: ChatbotProps) {
-  const [messages, setMessages] = useState<IMessage[]>([]);
+function Chatbot({ messages, setMessages, chatId, setChatId, onUpdateSources, onRefreshChats }: ChatbotProps) {
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [healthStatus, setHealthStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [chatId, setChatId] = useState<UUID | "None">("None");
 
   const checkHealth = async () => {
     try {
