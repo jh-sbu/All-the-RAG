@@ -4,9 +4,9 @@ import { UUID } from '../Models/ChatSession';
 
 interface ChatCardProps {
   title: string;
-  chatId?: UUID;
-  onDelete?: (chatId: UUID) => void;
-  onClick?: () => void;
+  chatId: UUID;
+  onDelete: (chatId: UUID) => void;
+  onClick: () => void;
 }
 
 function ChatCard({ title, chatId, onDelete, onClick }: ChatCardProps) {
