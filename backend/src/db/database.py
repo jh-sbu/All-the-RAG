@@ -149,7 +149,22 @@ def db_get_all_messages(db_url: str, chat_id: uuid.UUID, user_email: str) -> lis
 
         if chat.user != user:
             raise PermissionError("User not authorized to access this chat")
-    raise NotImplementedError
+
+        messages = (
+            session.execute(select(Message).where(Message.chat_id == chat_id))
+            .scalars()
+            .all()
+        )
+
+        messages = [
+            {
+                "sender": message.role,
+                "text": message.contents,
+            }
+            for message in messages
+        ]
+
+        return messages
 
 
 def db_create_message(db_url: str, role: str, contents: str, chat_id: uuid.UUID):

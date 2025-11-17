@@ -46,9 +46,7 @@ function ChatCard({ title, chatId, onDelete, onClick }: ChatCardProps) {
   };
 
   const handleCardClick = () => {
-    if (onClick) {
-      onClick();
-    }
+    onClick();
   };
 
   return (

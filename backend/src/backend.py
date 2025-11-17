@@ -23,6 +23,7 @@ from db.database import (
     db_create_chat,
     db_delete_chat,
     db_get_all_chats,
+    db_get_all_messages,
     db_get_user,
     db_get_chat,
     db_create_message,
@@ -183,6 +184,8 @@ def get_chat_history():
 def get_chat_messages(chat_id):
     logger.warning("WARNING! WARNING! Test user account enabled!")
     user_email = test_user_email
+
+    db_get_all_messages(db_url=database_url, chat_id=chat_id, user_email=user_email)
 
     return jsonify({"error": "Not implemented yet"}), 405
 
