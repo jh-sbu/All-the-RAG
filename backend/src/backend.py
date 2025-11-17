@@ -180,14 +180,26 @@ def get_chat_history():
         return jsonify({"error": "Invalid user"}), 404
 
 
-@backend.route("/api/chat/<int:chat_id>", methods=["GET"])
+@backend.route("/api/chat/<uuid:chat_id>", methods=["GET"])
 def get_chat_messages(chat_id):
     logger.warning("WARNING! WARNING! Test user account enabled!")
     user_email = test_user_email
 
-    db_get_all_messages(db_url=database_url, chat_id=chat_id, user_email=user_email)
+    try:
+        messages = db_get_all_messages(
+            db_url=database_url, chat_id=chat_id, user_email=user_email
+        )
 
-    return jsonify({"error": "Not implemented yet"}), 405
+        return jsonify({"messages": messages})
+
+    except PermissionError:
+        logger.info(
+            f"User {user_email} attempted to access chat {chat_id} but is NOT the owner of that chat"
+        )
+        # Don't tell them they found one though
+        return jsonify({"error": "Could not locate the specified record"}), 404
+    except NoResultFound:
+        return jsonify({"error": "Could not locate the specified record"}), 404
 
 
 @backend.route("/api/chat", methods=["DELETE"])
@@ -214,7 +226,7 @@ def delete_chat():
         return jsonify({"error": "Could not locate the specified record"}), 404
     except PermissionError:
         logger.info(
-            f"User {user_email} attempted to access chat {chat_id} but is NOT the owner of that chat"
+            f"User {user_email} attempted to delete chat {chat_id} but is NOT the owner of that chat"
         )
         # Don't want to allow enumerating existing chats so return the same as though
         # the record wasn't found, but we do want to log this seperately to spot

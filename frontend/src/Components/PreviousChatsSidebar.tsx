@@ -6,11 +6,12 @@ import { IChatSession, UUID } from '../Models/ChatSession';
 
 interface PreviousChatsSidebarProps {
   chats: IChatSession[];
-  onDeleteChat?: (chatId: UUID) => void;
+  onDeleteChat: (chatId: UUID) => void;
   onNewChat: () => void;
+  onPreviousClick: (chatId: UUID) => void;
 }
 
-const PreviousChatsSidebar: React.FC<PreviousChatsSidebarProps> = ({ chats, onDeleteChat, onNewChat }) => {
+const PreviousChatsSidebar: React.FC<PreviousChatsSidebarProps> = ({ chats, onDeleteChat, onNewChat, onPreviousClick }) => {
   return (
     <div className="previous-chats-sidebar">
       <NewChatButton onClick={onNewChat} />
@@ -21,6 +22,7 @@ const PreviousChatsSidebar: React.FC<PreviousChatsSidebarProps> = ({ chats, onDe
           title={chat.title}
           chatId={chat.id}
           onDelete={onDeleteChat}
+          onClick={onPreviousClick}
         />
       ))}
     </div>

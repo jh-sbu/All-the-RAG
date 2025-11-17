@@ -6,7 +6,7 @@ interface ChatCardProps {
   title: string;
   chatId: UUID;
   onDelete: (chatId: UUID) => void;
-  onClick: () => void;
+  onClick: (chatId: UUID) => void;
 }
 
 function ChatCard({ title, chatId, onDelete, onClick }: ChatCardProps) {
@@ -45,8 +45,9 @@ function ChatCard({ title, chatId, onDelete, onClick }: ChatCardProps) {
     }
   };
 
-  const handleCardClick = () => {
-    onClick();
+  const handleCardClick = (e?: MouseEvent) => {
+    e?.stopPropagation();
+    onClick(chatId);
   };
 
   return (
