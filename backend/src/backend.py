@@ -190,6 +190,9 @@ def get_chat_messages(chat_id):
             db_url=database_url, chat_id=chat_id, user_email=user_email
         )
 
+        for message in messages:
+            print(f"Message: {message}")
+
         return jsonify({"messages": messages})
 
     except PermissionError:
@@ -257,8 +260,17 @@ def send_message():
         ), 400
 
     chat_uuid = data["uuid"]
-    full_message = " ".join([message["content"] for message in data["messages"]])
-    # logger.debug(f"User message: {full_message}")
+    messages = data.get("messages")
+    if not isinstance(messages, list) or len(messages) < 1:
+        return jsonify({"error": "messages must be a non-empty list"}), 400
+
+    full_message = " ".join([message["content"] for message in messages])
+
+    # full_message = " ".join([message["content"] for message in data["messages"]])
+    latest_message = messages[-1]["content"]
+    logger.debug(f"User message: {full_message}")
+
+    logger.debug(f"Latest message: {latest_message}")
 
     try:
         if user is not None:
@@ -294,7 +306,7 @@ def send_message():
                 db_create_message(
                     database_url,
                     "user",
-                    full_message,
+                    latest_message,
                     chat_uuid,
                 )
 

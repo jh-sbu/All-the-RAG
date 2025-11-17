@@ -151,7 +151,9 @@ def db_get_all_messages(db_url: str, chat_id: uuid.UUID, user_email: str) -> lis
             raise PermissionError("User not authorized to access this chat")
 
         messages = (
-            session.execute(select(Message).where(Message.chat_id == chat_id))
+            session.execute(
+                select(Message).where(Message.chat_id == chat_id).order_by(Message.id)
+            )
             .scalars()
             .all()
         )

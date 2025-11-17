@@ -53,8 +53,14 @@ const App: React.FC = () => {
     fetchChatHistory();
   }, []);
 
-  const handleDeleteChat = (chatId: UUID) => {
-    setChats((prevChats: IChatSession[]) => prevChats.filter((chat: IChatSession) => chat.id !== chatId));
+  const handleDeleteChat = (deleteId: UUID) => {
+    setChats((prevChats: IChatSession[]) => prevChats.filter((chat: IChatSession) => chat.id !== deleteId));
+
+    if (deleteId == chatId) {
+      setMessages([]);
+      setChatId("None");
+      setSources([]);
+    }
   };
 
   const handleNewChat = () => {
