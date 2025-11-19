@@ -265,13 +265,6 @@ def send_message():
     if data is None or "messages" not in data.keys():
         return jsonify({"error": "No user prompt received"}), 400
 
-    # if "uuid" not in data.keys():
-    #     return jsonify(
-    #         {
-    #             "error": "uuid field not received in request (new chats should report uuid as None)"
-    #         }
-    #     ), 400
-
     raw_uuid: str | None = data.get("uuid")
     if raw_uuid is None:
         return jsonify(
