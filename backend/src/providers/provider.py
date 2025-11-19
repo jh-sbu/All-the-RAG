@@ -18,7 +18,8 @@ class Provider(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_chat_title(
         self,
-        messages: list[dict[str, str]],
+        user_query: str,
+        agent_response: str,
         # ) -> Generator[tuple[str, str], None, None]:
     ) -> str:
         """

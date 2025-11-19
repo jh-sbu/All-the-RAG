@@ -1,4 +1,6 @@
 import json
+import random
+from typing import Literal
 import uuid
 from flask import Flask, Response, jsonify, request, stream_with_context
 from flask_cors import CORS
@@ -25,6 +27,7 @@ from db.database import (
     db_get_user,
     db_get_chat,
     db_create_message,
+    db_set_chat_title,
 )
 from vdb.amazons3vector import AmazonS3Vector
 from vdb.faiss import FaissIndex
@@ -258,21 +261,38 @@ def send_message():
     if data is None or "messages" not in data.keys():
         return jsonify({"error": "No user prompt received"}), 400
 
-    if "uuid" not in data.keys():
+    # if "uuid" not in data.keys():
+    #     return jsonify(
+    #         {
+    #             "error": "uuid field not received in request (new chats should report uuid as None)"
+    #         }
+    #     ), 400
+
+    raw_uuid: str | None = data.get("uuid")
+    if raw_uuid is None:
         return jsonify(
             {
                 "error": "uuid field not received in request (new chats should report uuid as None)"
             }
         ), 400
 
-    chat_uuid = data["uuid"]
+    try:
+        if raw_uuid == "None":
+            chat_uuid: uuid.UUID | None = None
+            init_new_chat: bool = True
+        else:
+            chat_uuid = uuid.UUID(raw_uuid)
+            init_new_chat = False
+
+    except ValueError:
+        return jsonify({"error": "Could not parse the uuid field correctly"}), 400
+
     messages = data.get("messages")
     if not isinstance(messages, list) or len(messages) < 1:
         return jsonify({"error": "messages must be a non-empty list"}), 400
 
     full_message = " ".join([message["content"] for message in messages])
 
-    # full_message = " ".join([message["content"] for message in data["messages"]])
     latest_message = messages[-1]["content"]
     logger.debug(f"User message: {full_message}")
 
@@ -281,7 +301,7 @@ def send_message():
     try:
         if user is not None:
             # New chat
-            if chat_uuid == "None":
+            if chat_uuid is None:
                 logger.debug(
                     "Received post request with no chat_uuid, creating new one"
                 )
@@ -316,16 +336,15 @@ def send_message():
                     chat_uuid,
                 )
 
+        print(chat_uuid)
+
         contexts = vector_db.get_nearest(3, full_message)
         logger.debug(f"Received {len(contexts)} context(s)")
 
         logger.debug("Querying provider")
 
         def stream_and_store():
-            # Pyright understands chat_uuid is not "None" if user
-            # is not None, if we check chat_uuid here it complains
-            # about chat_uuid below in the finally block
-            if data["uuid"] == "None" and user is not None:
+            if init_new_chat and user is not None:
                 yield f"event: set_uuid\ndata: {json.dumps({'new_uuid': str(chat_uuid)})}\n\n"
 
             chunks: list[str] = []
@@ -341,14 +360,26 @@ def send_message():
             finally:
                 message_content = "".join(chunks)
                 logger.info(f"Received message: {message_content}")
-                if user is not None:
+                if chat_uuid is not None:
                     db_create_message(
                         database_url,
                         "assistant",
                         message_content,
                         chat_uuid,
-                        # uuid.UUID("07768b7e-c3f0-40f4-a84d-7706d0d425e5"),
                     )
+
+                if init_new_chat:
+                    # title_query = [latest_message, message_content]
+                    new_chat_title = provider.get_chat_title(
+                        latest_message, message_content
+                    )
+                    # new_chat_title = f"TEST TITLE {random.randint(0, 10000)}"
+
+                    print(f"Picked title {new_chat_title}")
+
+                    if chat_uuid is not None:
+                        # Should only happen when user is not none
+                        db_set_chat_title(database_url, chat_uuid, new_chat_title)
 
                 # TODO
                 logger.warning("WARNING! WARNING! UPLOADING TO DB NOT YET SUPPORTED!")

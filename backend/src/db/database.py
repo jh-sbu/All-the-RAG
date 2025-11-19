@@ -23,6 +23,9 @@ from sqlalchemy.orm import (
 )
 
 
+ECHO_SQL: bool = False
+
+
 class Base(DeclarativeBase, MappedAsDataclass):
     pass
 
@@ -99,7 +102,7 @@ def db_get_all_chats(db_url: str, user_email: str) -> list[dict]:
     Raises:
         NoResultFound: User with the given email does not exist.
     """
-    engine = create_engine(db_url, echo=True)
+    engine = create_engine(db_url, echo=ECHO_SQL)
 
     with Session(engine) as session:
         user = session.execute(
@@ -139,7 +142,7 @@ def db_get_all_messages(db_url: str, chat_id: uuid.UUID, user_email: str) -> lis
         NoResultFound: Chat with the given UUID does not exist, or
         user with the given email address does not exist
     """
-    engine = create_engine(db_url, echo=True)
+    engine = create_engine(db_url, echo=ECHO_SQL)
 
     with Session(engine) as session:
         user = session.execute(
@@ -172,7 +175,7 @@ def db_get_all_messages(db_url: str, chat_id: uuid.UUID, user_email: str) -> lis
 
 def db_create_message(db_url: str, role: str, contents: str, chat_id: uuid.UUID):
     """Store a new message in the specified chat"""
-    engine = create_engine(db_url, echo=True)
+    engine = create_engine(db_url, echo=ECHO_SQL)
 
     with Session(engine) as session:
         new_message = Message(contents=contents, role=role, chat_id=chat_id)
@@ -186,7 +189,7 @@ def db_create_message(db_url: str, role: str, contents: str, chat_id: uuid.UUID)
 def db_get_chat(db_url: str, chat_id: uuid.UUID, user_email: str) -> Chat:
     """Retrieve a specific chat owned by user
     Raises: NoResultFound if user or chat cannot be found"""
-    engine = create_engine(db_url, echo=True)
+    engine = create_engine(db_url, echo=ECHO_SQL)
 
     with Session(engine) as session:
         user = session.execute(
@@ -211,7 +214,7 @@ def db_get_user(db_url: str, user_email: str) -> User:
     Raises:
         NoResultFound: If there is no user with the given email.
     """
-    engine = create_engine(db_url, echo=True)
+    engine = create_engine(db_url, echo=ECHO_SQL)
 
     with Session(engine) as session:
         user_stmt = select(User).where(User.email == user_email)
@@ -221,7 +224,7 @@ def db_get_user(db_url: str, user_email: str) -> User:
 
 def db_create_chat(db_url: str, initial_message: str, user: User):
     """Create a new chat for the given user"""
-    engine = create_engine(db_url, echo=True)
+    engine = create_engine(db_url, echo=ECHO_SQL)
 
     with Session(engine) as session:
         new_chat = Chat(
@@ -242,13 +245,13 @@ def db_set_chat_title(db_url: str, chat_id: uuid.UUID, chat_title: str):
     Raises:
         NoResultFound if no chat with the given id can be found
     """
-    engine = create_engine(db_url, echo=True)
+    engine = create_engine(db_url, echo=ECHO_SQL)
 
     chat_title = chat_title.strip()
 
     TITLE_PATTERN = re.compile(r"^[^\x00-\x1F\x7F]+$")
 
-    if not TITLE_PATTERN.match(chat_title) or chat_title:
+    if not TITLE_PATTERN.match(chat_title) or chat_title == "":
         # Default title
         chat_title = "Previous Chat"
 
@@ -282,7 +285,7 @@ def db_delete_chat(db_url: str, chat_id: uuid.UUID, user_email: str):
     Raises:
         PermissionError: If the user does not own the specified chat
     """
-    engine = create_engine(db_url, echo=True)
+    engine = create_engine(db_url, echo=ECHO_SQL)
 
     with Session(engine) as session:
         user = session.execute(
@@ -304,7 +307,7 @@ def db_delete_chat(db_url: str, chat_id: uuid.UUID, user_email: str):
 
 
 def add_example_message_to_chat(db_url: str):
-    engine = create_engine(db_url, echo=True)
+    engine = create_engine(db_url, echo=ECHO_SQL)
 
     with Session(engine) as session:
         try:
@@ -333,7 +336,7 @@ def add_example_message_to_chat(db_url: str):
 
 
 def add_test_user(db_url: str):
-    engine = create_engine(db_url, echo=True)
+    engine = create_engine(db_url, echo=ECHO_SQL)
 
     with Session(engine) as session:
         test_user = User(
@@ -355,7 +358,7 @@ def add_test_user(db_url: str):
 
 
 def create_example_chat(db_url: str):
-    engine = create_engine(db_url, echo=True)
+    engine = create_engine(db_url, echo=ECHO_SQL)
 
     with Session(engine) as session:
         try:

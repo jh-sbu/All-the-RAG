@@ -60,26 +60,46 @@ class OpenRouter(Provider):
 
     def get_chat_title(
         self,
-        messages: list[dict[str, str]],
-        # ) -> Generator[tuple[str, str], None, None]:
+        user_query: str,
+        agent_response: str,
     ) -> str:
         # TODO
+        """Messages should be one user message, one assistant message
+        I can't make these ChatCompletionMessageParam because
+        backend.py should be agnostic to model provider, including
+        providers that don't use OpenAI API
+        """
         logger.debug("Generating chat title for new chat")
-        chat_messages: Iterable[ChatCompletionMessageParam] = [self._title_prompt]
 
-        for message in messages:
-            if message["role"] == "assistant":
-                new_message: ChatCompletionMessageParam = {
-                    "role": "user",
-                    "content": message["content"],
-                }
-            else:
-                new_message: ChatCompletionMessageParam = {
-                    "role": "assistant",
-                    "content": message["content"],
-                }
+        user_message: ChatCompletionMessageParam = {
+            "role": "user",
+            "content": user_query,
+        }
 
-            chat_messages.append(new_message)
+        agent_message: ChatCompletionMessageParam = {
+            "role": "assistant",
+            "content": agent_response,
+        }
+
+        chat_messages: Iterable[ChatCompletionMessageParam] = [
+            self._title_prompt,
+            user_message,
+            agent_message,
+        ]
+
+        # for message in messages:
+        #     if message["role"] == "assistant":
+        #         new_message: ChatCompletionMessageParam = {
+        #             "role": "user",
+        #             "content": message["content"],
+        #         }
+        #     else:
+        #         new_message: ChatCompletionMessageParam = {
+        #             "role": "assistant",
+        #             "content": message["content"],
+        #         }
+        #
+        #     chat_messages.append(new_message)
 
         response = self.client.chat.completions.create(
             messages=chat_messages,

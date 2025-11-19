@@ -45,7 +45,7 @@ class Llama(Provider):
 
         self.model = get_model_name()
 
-    def get_chat_title(self, messages: list[dict[str, str]]) -> str:
+    def get_chat_title(self, user_query: str, agent_response: str) -> str:
         raise NotImplementedError
 
     def request(
