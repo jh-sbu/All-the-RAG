@@ -1,3 +1,4 @@
+import re
 from typing import List
 import uuid
 from flask import jsonify
@@ -234,6 +235,29 @@ def db_create_chat(db_url: str, initial_message: str, user: User):
         session.refresh(new_chat)
 
         return new_chat
+
+
+def db_set_chat_title(db_url: str, chat_id: uuid.UUID, chat_title: str):
+    """Set the title of an already created chat
+    Raises:
+        NoResultFound if no chat with the given id can be found
+    """
+    engine = create_engine(db_url, echo=True)
+
+    chat_title = chat_title.strip()
+
+    TITLE_PATTERN = re.compile(r"^[^\x00-\x1F\x7F]+$")
+
+    if not TITLE_PATTERN.match(chat_title) or chat_title:
+        # Default title
+        chat_title = "Previous Chat"
+
+    with Session(engine) as session:
+        chat = session.execute(select(Chat).where(Chat.id == chat_id)).scalar_one()
+
+        chat.title = chat_title
+
+        session.commit()
 
 
 def db_delete_user(db_url: str, user_email: str):

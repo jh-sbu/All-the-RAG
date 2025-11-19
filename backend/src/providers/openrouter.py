@@ -28,7 +28,6 @@ def get_client() -> openai.OpenAI:
     if api_key is None:
         raise ValueError("Could not read API key for OpenRouter")
 
-    # Don't need an api key for local inference
     return openai.OpenAI(api_key=api_key, base_url=base_url)
 
 
@@ -39,6 +38,7 @@ class OpenRouter(Provider):
     def __init__(
         self,
         system_prompt: str = "You are a helpful assistant, who helps users with problems related to the game Minecraft",
+        title_prompt: str = "Create a title that summarizes the following interaction",
     ) -> None:
         super().__init__()
         # load_dotenv()
@@ -53,12 +53,51 @@ class OpenRouter(Provider):
             "content": system_prompt,
         }
 
+        self._title_prompt: ChatCompletionMessageParam = {
+            "role": "system",
+            "content": title_prompt,
+        }
+
     def get_chat_title(
-        self, contents: list[dict[str, str]]
-    ) -> Generator[tuple[str, str], None, None]:
+        self,
+        messages: list[dict[str, str]],
+        # ) -> Generator[tuple[str, str], None, None]:
+    ) -> str:
         # TODO
         logger.debug("Generating chat title for new chat")
-        raise NotImplementedError
+        chat_messages: Iterable[ChatCompletionMessageParam] = [self._title_prompt]
+
+        for message in messages:
+            if message["role"] == "assistant":
+                new_message: ChatCompletionMessageParam = {
+                    "role": "user",
+                    "content": message["content"],
+                }
+            else:
+                new_message: ChatCompletionMessageParam = {
+                    "role": "assistant",
+                    "content": message["content"],
+                }
+
+            chat_messages.append(new_message)
+
+        response = self.client.chat.completions.create(
+            messages=chat_messages,
+            model=self.model,
+            stream=True,
+            max_completion_tokens=1024,
+            max_tokens=1024,
+        )
+
+        title = " ".join(
+            [
+                chunk.choices[0].delta.content
+                for chunk in response
+                if chunk.choices[0].delta.content is not None
+            ]
+        )
+
+        return title
 
     def request(
         self, contexts: list[Context], messages: list[dict[str, str]]
@@ -66,9 +105,9 @@ class OpenRouter(Provider):
         logger.debug(
             f"Received request with {len(contexts)} contexts and {len(messages)} messages"
         )
-        chat_messages: Iterable[ChatCompletionMessageParam] = []
+        chat_messages: Iterable[ChatCompletionMessageParam] = [self._system_prompt]
 
-        chat_messages.append(self._system_prompt)
+        # chat_messages.append(self._system_prompt)
 
         for context in contexts:
             new_message: ChatCompletionMessageParam = {
@@ -122,6 +161,12 @@ class OpenRouter(Provider):
 
     def system_prompt(self, prompt: str) -> None:
         self._system_prompt: ChatCompletionMessageParam = {
+            "role": "system",
+            "content": prompt,
+        }
+
+    def title_prompt(self, prompt: str) -> None:
+        self._title_prompt: ChatCompletionMessageParam = {
             "role": "system",
             "content": prompt,
         }

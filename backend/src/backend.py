@@ -11,8 +11,6 @@ from dotenv import load_dotenv
 import os
 
 import requests
-from sqlalchemy import Uuid
-from sqlalchemy import exc
 from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from atr_logger import get_logger, set_log_level
@@ -101,6 +99,14 @@ logger.info(f"VDB provider read as: {vdb_provider}")
 logger.info(f"Created vector db interface of type {type(vector_db)}")
 
 system_prompt = "You are a helpful assistant that assists users with the All the Mods modpacks for the video game Minecraft. Another model will provide you with whatever context it can about the user's query. Read the provided context and use it to respond to the user's query. Do not accuse the user of being the one to provide you with the contexts - it is another bot that does that and users do not like being accused of things they didn't do. Be concise - your job is to find the relevant information in the given context, not repeat everything you see word for word."
+title_prompt = """You are a specialist agent that creates a Title for an interaction between a user and a chatbot. You will receive a user message and a chatbot message. Create a short title for the interaction.
+            Keep your responses brief. You are creating a title, not responding to the user. 
+            If you return a response that is too long, this will be noted, and the title will be cut off, which may degrade the user experience.
+            Example interaction:
+            user: Hello! What is a Mekanism pipe?
+            assistant: A mekanism pipe is a pipe from the mod Mekanism, which does...
+
+            Your response: Mekanism pipe summary"""
 
 completion_provider = os.environ.get("COMPLETION_PROVIDER")
 logger.info(f"Setting up completion provider {completion_provider}")

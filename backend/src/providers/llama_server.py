@@ -1,7 +1,7 @@
 import os
 from typing import Generator, Iterable
 from dotenv import load_dotenv
-from flask import Response, json
+from flask import json
 from openai.types.chat import ChatCompletionMessageParam
 from models.context import Context
 from providers.provider import Provider
@@ -29,6 +29,7 @@ class Llama(Provider):
     def __init__(
         self,
         system_prompt: str = "You are a helpful assistant, who helps users with problems related to the game Minecraft",
+        title_prompt: str = "You are a title generation agent who reads an exchange between a chatbot and a user, then creates a title that summarizes the interaction.",
     ) -> None:
         super().__init__()
         load_dotenv()
@@ -37,12 +38,14 @@ class Llama(Provider):
             "role": "system",
             "content": system_prompt,
         }
+        self._title_prompt: ChatCompletionMessageParam = {
+            "role": "system",
+            "content": title_prompt,
+        }
 
         self.model = get_model_name()
 
-    def get_chat_title(
-        self, contents: list[dict[str, str]]
-    ) -> Generator[tuple[str, str], None, None]:
+    def get_chat_title(self, messages: list[dict[str, str]]) -> str:
         raise NotImplementedError
 
     def request(
@@ -88,3 +91,6 @@ class Llama(Provider):
             "role": "system",
             "content": prompt,
         }
+
+    def title_prompt(self, prompt: str):
+        self._title_prompt = {"role": "system", "content": prompt}
