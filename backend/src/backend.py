@@ -109,16 +109,20 @@ title_prompt = """You are a specialist agent that creates a Title for an interac
             user: Hello! What is a Mekanism pipe?
             assistant: A mekanism pipe is a pipe from the mod Mekanism, which does...
 
-            Your response: Mekanism pipe summary"""
+            Your response: Mekanism pipe summary
+            Do not add asterisks or special characters:
+            Good: Mekanism pipe summary
+            Bad: ** Mekanism ** PIPE ** summary **
+            """
 
 completion_provider = os.environ.get("COMPLETION_PROVIDER")
 logger.info(f"Setting up completion provider {completion_provider}")
 if completion_provider is None:
     raise ValueError("Could not find completion provider configuration")
 elif completion_provider == "Local":
-    provider = Llama(system_prompt=system_prompt)
+    provider = Llama(system_prompt=system_prompt, title_prompt=title_prompt)
 elif completion_provider == "OpenRouter":
-    provider = OpenRouter(system_prompt=system_prompt)
+    provider = OpenRouter(system_prompt=system_prompt, title_prompt=title_prompt)
 else:
     raise ValueError("Specified completion provider is not supported")
 
@@ -336,8 +340,6 @@ def send_message():
                     chat_uuid,
                 )
 
-        print(chat_uuid)
-
         contexts = vector_db.get_nearest(3, full_message)
         logger.debug(f"Received {len(contexts)} context(s)")
 
@@ -369,13 +371,14 @@ def send_message():
                     )
 
                 if init_new_chat:
-                    # title_query = [latest_message, message_content]
                     new_chat_title = provider.get_chat_title(
                         latest_message, message_content
                     )
-                    # new_chat_title = f"TEST TITLE {random.randint(0, 10000)}"
 
-                    print(f"Picked title {new_chat_title}")
+                    if len(new_chat_title) >= 127:
+                        new_chat_title = f"{new_chat_title[0:125]}..."
+
+                    logger.debug(f"Picked title {new_chat_title}")
 
                     if chat_uuid is not None:
                         # Should only happen when user is not none
