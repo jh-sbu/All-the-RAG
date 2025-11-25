@@ -109,11 +109,12 @@ class OpenRouter(Provider):
             max_tokens=1024,
         )
 
-        title = " ".join(
+        title = "".join(
             [
                 chunk.choices[0].delta.content
                 for chunk in response
                 if chunk.choices[0].delta.content is not None
+                and chunk.choices[0].delta.content != ""
             ]
         )
 
