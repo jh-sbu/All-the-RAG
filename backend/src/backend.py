@@ -182,10 +182,9 @@ def delete_account():
 @backend.route("/api/chat", methods=["GET"])
 def get_chat_history():
     logger.warning("WARNING! WARNING! Test user account enabled!")
-    user_email = "test_email@example.com"
 
     try:
-        chats = db_get_all_chats(db_url=database_url, user_email=user_email)
+        chats = db_get_all_chats(db_url=database_url, user_email=test_user_email)
 
         return jsonify({"chats": chats})
 
