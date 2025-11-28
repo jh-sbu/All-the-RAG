@@ -1,6 +1,4 @@
 import json
-import random
-from typing import Literal
 import uuid
 from flask import Flask, Response, jsonify, request, stream_with_context
 from flask_cors import CORS
@@ -16,6 +14,7 @@ import requests
 from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from atr_logger import get_logger, set_log_level
+from auth import require_supabase_user
 from db.database import (
     add_example_message_to_chat,
     add_test_user,
@@ -218,6 +217,7 @@ def get_chat_messages(chat_id):
 
 
 @backend.route("/api/chat", methods=["DELETE"])
+@require_supabase_user
 def delete_chat():
     chat_id = request.args.get("chat_id")
 
