@@ -2,9 +2,15 @@ import json
 import os
 from functools import wraps
 
+from dotenv import load_dotenv
 import jwt
 from jwt import PyJWKClient
 from flask import request, g, jsonify
+from requests import auth
+
+from atr_logger import get_logger
+
+load_dotenv()
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 
@@ -15,7 +21,10 @@ SUPABASE_URL = SUPABASE_URL.rstrip("/")
 ISSUER = f"{SUPABASE_URL}/auth/v1"
 JWKS_URL = f"{ISSUER}/.well-known/jwks.json"
 
+logger = get_logger()
 jwks_client = PyJWKClient(JWKS_URL)
+
+logger.debug(f"jwks_client: {jwks_client}")
 
 
 def verify_supabase_jwt(token: str) -> dict:
@@ -26,7 +35,7 @@ def verify_supabase_jwt(token: str) -> dict:
     return jwt.decode(
         token,
         signing_key.key,
-        algorithms=["RS256", "ES256"],
+        algorithms=["ES256"],
         audience="authenticated",
         issuer=ISSUER,
     )
@@ -40,9 +49,11 @@ def require_supabase_user(fn):
             return jsonify({"error": "Missing bearer token"}), 401
 
         token = auth_header.split(" ", 1)[1].strip()
+
         try:
             claims = verify_supabase_jwt(token)
-        except Exception as _:
+        except Exception as e:
+            logger.error(f"Failed to verify Supabase JWT: {e}")
             return jsonify({"error": "Invalid or expired token"}), 401
 
         # Make user info available to view functions

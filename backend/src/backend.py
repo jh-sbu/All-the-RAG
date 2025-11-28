@@ -1,11 +1,9 @@
 import json
 import uuid
-from flask import Flask, Response, jsonify, request, stream_with_context
+from flask import Flask, Response, jsonify, request, stream_with_context, g
 from flask_cors import CORS
 
 import jwt
-
-from authlib.integrations.flask_client import OAuth
 
 from dotenv import load_dotenv
 import os
@@ -66,16 +64,6 @@ backend.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 if not backend.config["SECRET_KEY"]:
     raise ValueError("Could not initialize SECRET_KEY for flask")
 
-oauth = OAuth(backend)
-
-if False:
-    google = oauth.register(
-        name="google",
-        client_id="CLIENT_ID",
-        client_secret="CLIENT_SECRET",
-        server_metadata_url="GOOGLE_URL",
-        client_kwargs={"scope": "openid email"},
-    )
 
 # Some hosts, e.g. AWS lambda urls, do CORS themselves; turn on/off
 # flask's own cors depending on whether it is needed or not
@@ -179,8 +167,25 @@ def delete_account():
 
 
 @backend.route("/api/chat", methods=["GET"])
+@require_supabase_user
 def get_chat_history():
     logger.warning("WARNING! WARNING! Test user account enabled!")
+
+    # auth_header = request.headers.get("Authorization", "")
+    #
+    # logger.debug(f"Auth header: {auth_header}")
+    # logger.debug(f"Auth header length: {len(auth_header)}")
+
+    logger.debug(f"g: {g}")
+
+    ctx = g._get_current_object()
+
+    for k, v in vars(ctx).items():
+        logger.debug("%s: %r", k, v)
+
+    # for x in g:
+    #     logger.debug(f"x: {x}")
+    #     logger.debug(f"g.x: {g.x}")
 
     try:
         chats = db_get_all_chats(db_url=database_url, user_email=test_user_email)
@@ -254,7 +259,6 @@ def delete_chat():
 @backend.route("/api/message", methods=["POST"])
 def send_message():
     data = request.get_json()
-
     # TODO
     try:
         user = db_get_user(database_url, test_user_email)

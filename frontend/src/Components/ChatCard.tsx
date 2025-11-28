@@ -1,6 +1,7 @@
 import { type MouseEvent, useState } from 'react';
 import './ChatCard.css';
 import { UUID } from '../Models/ChatSession';
+import { apiFetch } from '../lib/api';
 
 interface ChatCardProps {
   title: string;
@@ -29,10 +30,9 @@ function ChatCard({ title, chatId, onDelete, onClick }: ChatCardProps) {
 
     try {
       setIsDeleting(true);
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URI}/api/chat?chat_id=${chatId}`,
-        { method: 'DELETE' }
-      );
+      const response = await apiFetch(`/api/chat?chat_id=${chatId}`, {
+        method: 'DELETE',
+      });
 
       if (response.ok && onDelete) {
         onDelete(chatId);

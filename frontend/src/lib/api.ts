@@ -12,5 +12,8 @@ export async function apiFetch(
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  return fetch(`${import.meta.env.VITE_BACKEND_URI}${path}`);
+  return fetch(`${import.meta.env.VITE_BACKEND_URI}${path}`, {
+    ...init,
+    headers,
+  });
 }

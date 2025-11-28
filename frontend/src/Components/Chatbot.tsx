@@ -4,6 +4,7 @@ import { ISource } from '../Models/Source';
 import './Chatbot.css';
 import { UUID } from '../Models/ChatSession';
 import { Session } from '@supabase/supabase-js';
+import { apiFetch } from '../lib/api';
 
 interface ChatbotProps {
   messages: IMessage[];
@@ -22,7 +23,7 @@ function Chatbot({ messages, setMessages, chatId, setChatId, onUpdateSources, on
 
   const checkHealth = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URI}/health_check`, {
+      const response = await apiFetch('/health_check', {
         method: 'GET',
       });
 

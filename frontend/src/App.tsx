@@ -9,6 +9,7 @@ import { IChatSession, UUID } from './Models/ChatSession';
 import { ISource } from './Models/Source';
 import { IMessage } from './Models/Message';
 import { supabase } from './lib/supabase';
+import { apiFetch } from './lib/api';
 import { Session } from '@supabase/supabase-js';
 
 const App: React.FC = () => {
@@ -22,7 +23,7 @@ const App: React.FC = () => {
 
   const fetchChatHistory = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URI}/api/chat`);
+      const response = await apiFetch('/api/chat');
       const data = await response.json();
 
       if (data && typeof data === "object" && 'chats' in data) {
@@ -75,7 +76,7 @@ const App: React.FC = () => {
   const handlePreviousChat = async (chatId: UUID) => {
     console.debug(`User clicked on a previous chat: ${chatId}`);
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URI}/api/chat/${chatId}`);
+      const response = await apiFetch(`/api/chat/${chatId}`);
       const data = await response.json();
       setMessages(data.messages);
     } catch (error) {
