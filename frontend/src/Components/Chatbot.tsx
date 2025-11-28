@@ -3,6 +3,7 @@ import { IMessage } from '../Models/Message';
 import { ISource } from '../Models/Source';
 import './Chatbot.css';
 import { UUID } from '../Models/ChatSession';
+import { Session } from '@supabase/supabase-js';
 
 interface ChatbotProps {
   messages: IMessage[];
@@ -11,9 +12,10 @@ interface ChatbotProps {
   setChatId: React.Dispatch<React.SetStateAction<UUID | "None">>;
   onUpdateSources: (sources: ISource[]) => void;
   onRefreshChats: () => Promise<void>;
+  session: Session | null;
 }
 
-function Chatbot({ messages, setMessages, chatId, setChatId, onUpdateSources, onRefreshChats }: ChatbotProps) {
+function Chatbot({ messages, setMessages, chatId, setChatId, onUpdateSources, onRefreshChats, session }: ChatbotProps) {
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [healthStatus, setHealthStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -162,7 +164,7 @@ function Chatbot({ messages, setMessages, chatId, setChatId, onUpdateSources, on
   return (
     <div className="chatbot">
       <div className="header">
-        <h2>All the RAG</h2>
+        <h2>Chat</h2>
         <button
           className={`health-check-btn ${healthStatus}`}
           onClick={checkHealth}
@@ -172,6 +174,12 @@ function Chatbot({ messages, setMessages, chatId, setChatId, onUpdateSources, on
           {healthStatus === 'error' && '✗ Error'}
         </button>
       </div>
+      {!session && messages.length === 0 && (
+        <div className="auth-notice">
+          <p>You can use the chatbot without logging in, but your conversation history won't be saved.</p>
+          <p>Log in to save your chats and access them later.</p>
+        </div>
+      )}
       <div className="chat-window">
         {messages.map((msg, index) => (
           <div key={index} className={`message ${msg.sender}`}>

@@ -45,6 +45,26 @@
   border-color: #dc3545;
 }
 
+.auth-notice {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.auth-notice p {
+  margin: 0.5rem 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.auth-notice p:first-child {
+  font-weight: 500;
+  color: #333;
+}
+
 .chat-window {
   border: 1px solid #ccc;
   padding: 10px;

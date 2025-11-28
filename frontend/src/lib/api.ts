@@ -1,4 +1,4 @@
-import { supabase } from './supbaseClient';
+import { supabase } from './supabase';
 
 export async function apiFetch(
   path: string,
