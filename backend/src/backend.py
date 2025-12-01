@@ -183,12 +183,10 @@ def get_chat_history():
     for k, v in vars(ctx).items():
         logger.debug("%s: %r", k, v)
 
-    # for x in g:
-    #     logger.debug(f"x: {x}")
-    #     logger.debug(f"g.x: {g.x}")
+    logger.debug(f"g.user_id: {g.sub}")
 
     try:
-        chats = db_get_all_chats(db_url=database_url, user_email=test_user_email)
+        chats = db_get_all_chats(db_url=database_url, issuer=g.iss, sub=g.sub)
 
         return jsonify({"chats": chats})
 
@@ -197,13 +195,14 @@ def get_chat_history():
 
 
 @backend.route("/api/chat/<uuid:chat_id>", methods=["GET"])
+@require_supabase_user
 def get_chat_messages(chat_id):
     logger.warning("WARNING! WARNING! Test user account enabled!")
     user_email = test_user_email
 
     try:
         messages = db_get_all_messages(
-            db_url=database_url, chat_id=chat_id, user_email=user_email
+            db_url=database_url, chat_id=chat_id, issuer=g.iss, sub=g.sub
         )
 
         for message in messages:
@@ -226,9 +225,10 @@ def get_chat_messages(chat_id):
 def delete_chat():
     chat_id = request.args.get("chat_id")
 
-    user_email = test_user_email
+    if "sub" not in g.keys or "iss" not in g.keys:
+        return jsonify({"error": "User could not be verified"}), 401
 
-    logger.info(f"User {user_email} attempting to delete chat {chat_id}")
+    logger.info(f"User {g.sub} from {g.iss} attempting to delete chat {chat_id}")
 
     if not chat_id:
         return jsonify({"error": "No chat ID specified"}), 400
@@ -239,14 +239,14 @@ def delete_chat():
         return jsonify({"error": "Could not parse chat ID"}), 400
 
     try:
-        db_delete_chat(database_url, chat_id=chat_id, user_email=user_email)
+        db_delete_chat(database_url, chat_id=chat_id, issuer=g.iss, sub=g.sub)
     except IntegrityError:
         return jsonify({"error": "Error updating database"}), 500
     except NoResultFound:
         return jsonify({"error": "Could not locate the specified record"}), 404
     except PermissionError:
         logger.info(
-            f"User {user_email} attempted to delete chat {chat_id} but is NOT the owner of that chat"
+            f"User {g.sub} from {g.iss} attempted to delete chat {chat_id} but is NOT the owner of that chat"
         )
         # Don't want to allow enumerating existing chats so return the same as though
         # the record wasn't found, but we do want to log this seperately to spot
@@ -261,9 +261,11 @@ def send_message():
     data = request.get_json()
     # TODO
     try:
-        user = db_get_user(database_url, test_user_email)
+        user = db_get_user(database_url, issuer=g.iss, sub=g.sub)
     except NoResultFound:
         user = None
+    except KeyError:
+        return jsonify({"error": "User could not be verified"})
 
     if data is None or "messages" not in data.keys():
         return jsonify({"error": "No user prompt received"}), 400

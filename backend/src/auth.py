@@ -58,7 +58,8 @@ def require_supabase_user(fn):
 
         # Make user info available to view functions
         g.jwt_claims = claims
-        g.user_id = claims.get("sub")
+        g.sub = claims.get("sub")
+        g.iss = claims.get("iss")
 
         return fn(*args, **kwargs)
 

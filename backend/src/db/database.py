@@ -96,7 +96,7 @@ class Message(Base):
         return f"Chat(id={self.id!r}, chat={self.chat!r}, chat_id={self.chat_id!r}, contents={self.contents!r})"
 
 
-def db_get_all_chats(db_url: str, user_email: str) -> list[dict]:
+def db_get_all_chats(db_url: str, issuer: str, sub: str) -> list[dict]:
     """Return all chats associated with the given user email.
 
     Raises:
@@ -106,7 +106,7 @@ def db_get_all_chats(db_url: str, user_email: str) -> list[dict]:
 
     with Session(engine) as session:
         user = session.execute(
-            select(User).where(User.email == user_email)
+            select(User).where(User.issuer == issuer, User.sub == sub)
         ).scalar_one()
 
         chats = (
@@ -135,7 +135,9 @@ def db_get_all_chats(db_url: str, user_email: str) -> list[dict]:
         return result
 
 
-def db_get_all_messages(db_url: str, chat_id: uuid.UUID, user_email: str) -> list[dict]:
+def db_get_all_messages(
+    db_url: str, chat_id: uuid.UUID, issuer: str, sub: str
+) -> list[dict]:
     """
     Get all chat messages associated with the specified chat
     Raises:
@@ -146,7 +148,7 @@ def db_get_all_messages(db_url: str, chat_id: uuid.UUID, user_email: str) -> lis
 
     with Session(engine) as session:
         user = session.execute(
-            select(User).where(User.email == user_email)
+            select(User).where(User.issuer == issuer, User.sub == sub)
         ).scalar_one()
 
         chat = session.execute(select(Chat).where(Chat.id == chat_id)).scalar_one()
@@ -208,7 +210,7 @@ def db_get_chat(db_url: str, chat_id: uuid.UUID, user_email: str) -> Chat:
         return chat
 
 
-def db_get_user(db_url: str, user_email: str) -> User:
+def db_get_user(db_url: str, issuer: str, sub: str) -> User:
     """
     Get the user with the given email.
     Raises:
@@ -217,7 +219,7 @@ def db_get_user(db_url: str, user_email: str) -> User:
     engine = create_engine(db_url, echo=ECHO_SQL)
 
     with Session(engine) as session:
-        user_stmt = select(User).where(User.email == user_email)
+        user_stmt = select(User).where(User.issuer == issuer, User.sub == sub)
         user = session.execute(user_stmt).scalar_one()
         return user
 
@@ -279,7 +281,7 @@ def db_delete_user(db_url: str, user_email: str):
         session.commit()
 
 
-def db_delete_chat(db_url: str, chat_id: uuid.UUID, user_email: str):
+def db_delete_chat(db_url: str, chat_id: uuid.UUID, issuer: str, sub: str):
     """Delete the specified chat.
     Returns: True if the chat was successfully deleted; false otherwise
     Raises:
@@ -289,7 +291,7 @@ def db_delete_chat(db_url: str, chat_id: uuid.UUID, user_email: str):
 
     with Session(engine) as session:
         user = session.execute(
-            select(User).where(User.email == user_email)
+            select(User).where(User.issuer == issuer, User.sub == sub)
         ).scalar_one()
 
         chat_to_delete = session.execute(
