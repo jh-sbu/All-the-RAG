@@ -171,11 +171,6 @@ def delete_account():
 def get_chat_history():
     logger.warning("WARNING! WARNING! Test user account enabled!")
 
-    # auth_header = request.headers.get("Authorization", "")
-    #
-    # logger.debug(f"Auth header: {auth_header}")
-    # logger.debug(f"Auth header length: {len(auth_header)}")
-
     logger.debug(f"g: {g}")
 
     ctx = g._get_current_object()
@@ -191,14 +186,13 @@ def get_chat_history():
         return jsonify({"chats": chats})
 
     except NoResultFound:
-        return jsonify({"error": "Invalid user"}), 404
+        return jsonify({"chats": []})
 
 
 @backend.route("/api/chat/<uuid:chat_id>", methods=["GET"])
 @require_supabase_user
 def get_chat_messages(chat_id):
     logger.warning("WARNING! WARNING! Test user account enabled!")
-    user_email = test_user_email
 
     try:
         messages = db_get_all_messages(
@@ -212,7 +206,7 @@ def get_chat_messages(chat_id):
 
     except PermissionError:
         logger.info(
-            f"User {user_email} attempted to access chat {chat_id} but is NOT the owner of that chat"
+            f"User {g.sub} from {g.iss} attempted to access chat {chat_id} but is NOT the owner of that chat"
         )
         # Don't tell them they found one though
         return jsonify({"error": "Could not locate the specified record"}), 404
@@ -256,14 +250,13 @@ def delete_chat():
     return "ok", 200
 
 
+@require_supabase_user
 @backend.route("/api/message", methods=["POST"])
 def send_message():
     data = request.get_json()
     # TODO
     try:
         user = db_get_user(database_url, issuer=g.iss, sub=g.sub)
-    except NoResultFound:
-        user = None
     except KeyError:
         return jsonify({"error": "User could not be verified"})
 

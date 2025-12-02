@@ -11,7 +11,7 @@ from sqlalchemy import (
     create_engine,
     select,
 )
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -24,6 +24,11 @@ from sqlalchemy.orm import (
 
 
 ECHO_SQL: bool = False
+
+
+"""
+This modules assumes that issuer/sub have been verified by the calling function
+"""
 
 
 class Base(DeclarativeBase, MappedAsDataclass):
@@ -210,18 +215,20 @@ def db_get_chat(db_url: str, chat_id: uuid.UUID, user_email: str) -> Chat:
         return chat
 
 
-def db_get_user(db_url: str, issuer: str, sub: str) -> User:
+def db_get_user(db_url: str, issuer: str, sub: str) -> User | None:
     """
-    Get the user with the given email.
-    Raises:
-        NoResultFound: If there is no user with the given email.
+    Gets the user with the given issuer/sub pair
+    Returns none if no such user exists
     """
     engine = create_engine(db_url, echo=ECHO_SQL)
 
-    with Session(engine) as session:
-        user_stmt = select(User).where(User.issuer == issuer, User.sub == sub)
-        user = session.execute(user_stmt).scalar_one()
-        return user
+    try:
+        with Session(engine) as session:
+            user_stmt = select(User).where(User.issuer == issuer, User.sub == sub)
+            user = session.execute(user_stmt).scalar_one()
+            return user
+    except NoResultFound:
+        return None
 
 
 def db_create_chat(db_url: str, initial_message: str, user: User):
