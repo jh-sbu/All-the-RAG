@@ -1,4 +1,5 @@
 import json
+from logging import log
 import os
 from functools import wraps
 
@@ -27,7 +28,7 @@ jwks_client = PyJWKClient(JWKS_URL)
 logger.debug(f"jwks_client: {jwks_client}")
 
 
-def verify_supabase_jwt(token: str) -> dict:
+def verify_supabase_jwt(token: str) -> dict[str, str]:
     """
     Verify a Supabase access token and return its claims
     """
@@ -45,22 +46,28 @@ def require_supabase_user(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         auth_header = request.headers.get("Authorization", "")
+        g.logged_in = False
+
         if not auth_header.startswith("Bearer "):
-            return jsonify({"error": "Missing bearer token"}), 401
+            logger.info("No bearer token found")
 
         token = auth_header.split(" ", 1)[1].strip()
 
         try:
             claims = verify_supabase_jwt(token)
+            g.logged_in = True
+            g.jwt_claims = claims
+            g.sub = claims.get("sub")
+            g.iss = claims.get("iss")
+            g.email = claims.get("email")
+
+            # assert g.sub is not None
+            # assert g.iss is not None
+
         except Exception as e:
             logger.error(f"Failed to verify Supabase JWT: {e}")
-            return jsonify({"error": "Invalid or expired token"}), 401
 
         # Make user info available to view functions
-        g.jwt_claims = claims
-        g.sub = claims.get("sub")
-        g.iss = claims.get("iss")
-
         return fn(*args, **kwargs)
 
     return wrapper

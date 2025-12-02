@@ -21,7 +21,7 @@ from db.database import (
     db_delete_chat,
     db_get_all_chats,
     db_get_all_messages,
-    db_get_user,
+    db_get_or_create_user,
     db_get_chat,
     db_create_message,
     db_set_chat_title,
@@ -256,7 +256,7 @@ def send_message():
     data = request.get_json()
     # TODO
     try:
-        user = db_get_user(database_url, issuer=g.iss, sub=g.sub)
+        user = db_get_or_create_user(database_url, issuer=g.iss, sub=g.sub)
     except KeyError:
         return jsonify({"error": "User could not be verified"})
 
@@ -264,10 +264,11 @@ def send_message():
         return jsonify({"error": "No user prompt received"}), 400
 
     raw_uuid: str | None = data.get("uuid")
+
     if raw_uuid is None:
         return jsonify(
             {
-                "error": "uuid field not received in request (new chats should report uuid as None)"
+                "error": "uuid field not received in request (new chats should report uuid as the string 'None')"
             }
         ), 400
 
