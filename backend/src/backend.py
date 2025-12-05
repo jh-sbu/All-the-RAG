@@ -278,13 +278,8 @@ def send_message():
     except ValueError:
         return jsonify({"error": "Could not parse the uuid field correctly"}), 400
 
-    if g.iss is not None and g.sub is not None:
-        try:
-            user = db_get_or_create_user(database_url, issuer=g.iss, sub=g.sub)
-
-        # User tries to authenticate but the request is malformed somehow
-        except KeyError:
-            return jsonify({"error": "User could not be verified"}), 400
+    if g.logged_in:
+        user = db_get_or_create_user(database_url, issuer=g.iss, sub=g.sub)
     else:
         user = None
 

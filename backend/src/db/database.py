@@ -214,7 +214,7 @@ def db_get_chat(db_url: str, chat_id: uuid.UUID, iss: str, sub: str) -> Chat:
         return chat
 
 
-def db_get_or_create_user(db_url: str, issuer: str, sub: str) -> User | None:
+def db_get_or_create_user(db_url: str, issuer: str, sub: str) -> User:
     """
     Gets the user with the given issuer/sub pair
     If no such user exists, create one and return that

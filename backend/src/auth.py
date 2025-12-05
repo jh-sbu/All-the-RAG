@@ -56,14 +56,12 @@ def require_supabase_user(fn):
             try:
                 claims = verify_supabase_jwt(token)
                 # Make user info available to view functions
-                g.logged_in = True
                 g.jwt_claims = claims
-                g.iss = claims.get("iss")
-                g.sub = claims.get("sub")
+                g.iss = claims.get("iss", None)
+                g.sub = claims.get("sub", None)
                 g.email = claims.get("email")
 
-                # assert g.sub is not None
-                # assert g.iss is not None
+                g.logged_in = g.iss is not None and g.sub is not None
 
             except Exception as e:
                 logger.error(f"Failed to verify Supabase JWT: {e}")
