@@ -43,28 +43,31 @@ def require_supabase_user(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         auth_header = request.headers.get("Authorization", "")
-        g.logged_in = False
 
         if not auth_header.startswith("Bearer "):
             logger.info("No bearer token found")
+            g.logged_in = False
+            g.iss = None
+            g.sub = None
 
-        token = auth_header.split(" ", 1)[1].strip()
+        else:
+            token = auth_header.split(" ", 1)[1].strip()
 
-        try:
-            claims = verify_supabase_jwt(token)
-            g.logged_in = True
-            g.jwt_claims = claims
-            g.sub = claims.get("sub")
-            g.iss = claims.get("iss")
-            g.email = claims.get("email")
+            try:
+                claims = verify_supabase_jwt(token)
+                # Make user info available to view functions
+                g.logged_in = True
+                g.jwt_claims = claims
+                g.iss = claims.get("iss")
+                g.sub = claims.get("sub")
+                g.email = claims.get("email")
 
-            # assert g.sub is not None
-            # assert g.iss is not None
+                # assert g.sub is not None
+                # assert g.iss is not None
 
-        except Exception as e:
-            logger.error(f"Failed to verify Supabase JWT: {e}")
+            except Exception as e:
+                logger.error(f"Failed to verify Supabase JWT: {e}")
 
-        # Make user info available to view functions
         return fn(*args, **kwargs)
 
     return wrapper

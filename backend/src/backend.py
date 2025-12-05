@@ -250,8 +250,8 @@ def delete_chat():
     return "ok", 200
 
 
-@require_supabase_user
 @backend.route("/api/message", methods=["POST"])
+@require_supabase_user
 def send_message():
     data = request.get_json()
 
@@ -268,22 +268,6 @@ def send_message():
         ), 400
 
     try:
-        logger.error("FLORP FLORP FLORP")
-        logger.error("FLORP FLORP FLORP")
-        logger.error("FLORP FLORP FLORP")
-        logger.error("FLORP FLORP FLORP")
-        logger.error("FLORP FLORP FLORP")
-        logger.error("FLORP FLORP FLORP")
-        logger.error("FLORP FLORP FLORP")
-
-        for k, v in g:
-            print(f"{k}: {v}")
-
-        user = db_get_or_create_user(database_url, issuer=g.iss, sub=g.sub)
-    except KeyError:
-        return jsonify({"error": "User could not be verified"})
-
-    try:
         if raw_uuid == "None":
             chat_uuid: uuid.UUID | None = None
             init_new_chat: bool = True
@@ -293,6 +277,16 @@ def send_message():
 
     except ValueError:
         return jsonify({"error": "Could not parse the uuid field correctly"}), 400
+
+    if g.iss is not None and g.sub is not None:
+        try:
+            user = db_get_or_create_user(database_url, issuer=g.iss, sub=g.sub)
+
+        # User tries to authenticate but the request is malformed somehow
+        except KeyError:
+            return jsonify({"error": "User could not be verified"}), 400
+    else:
+        user = None
 
     messages = data.get("messages")
     if not isinstance(messages, list) or len(messages) < 1:
