@@ -214,7 +214,7 @@ def db_get_chat(db_url: str, chat_id: uuid.UUID, iss: str, sub: str) -> Chat:
         return chat
 
 
-def db_get_or_create_user(db_url: str, issuer: str, sub: str) -> User:
+def db_get_or_create_user(db_url: str, issuer: str, sub: str) -> None:
     """
     Gets the user with the given issuer/sub pair
     If no such user exists, create one and return that
@@ -224,24 +224,22 @@ def db_get_or_create_user(db_url: str, issuer: str, sub: str) -> User:
     with Session(engine) as session:
         try:
             user_stmt = select(User).where(User.issuer == issuer, User.sub == sub)
-            user = session.execute(user_stmt).scalar_one()
-            return user
+            session.execute(user_stmt).scalar_one()
+
         except NoResultFound:
             new_user = User(issuer=issuer, sub=sub, user_prompt="", chats=[])
             session.add(new_user)
             session.commit()
 
-            return new_user
 
-
-def db_create_chat(db_url: str, initial_message: str, user: User):
+def db_create_chat(db_url: str, initial_message: str, issuer: str, sub: str):
     """Create a new chat for the given user"""
     engine = create_engine(db_url, echo=ECHO_SQL)
 
     with Session(engine) as session:
         new_chat = Chat(
-            user_issuer=user.issuer,
-            user_sub=user.sub,
+            user_issuer=issuer,
+            user_sub=sub,
             title="Previous Chat",
             messages=[Message(initial_message, "user")],
         )

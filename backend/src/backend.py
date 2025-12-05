@@ -279,9 +279,7 @@ def send_message():
         return jsonify({"error": "Could not parse the uuid field correctly"}), 400
 
     if g.logged_in:
-        user = db_get_or_create_user(database_url, issuer=g.iss, sub=g.sub)
-    else:
-        user = None
+        _ = db_get_or_create_user(database_url, issuer=g.iss, sub=g.sub)
 
     messages = data.get("messages")
     if not isinstance(messages, list) or len(messages) < 1:
@@ -295,13 +293,13 @@ def send_message():
     logger.debug(f"Latest message: {latest_message}")
 
     try:
-        if user is not None:
+        if g.logged_in:
             # New chat
             if chat_uuid is None:
                 logger.debug(
                     "Received post request with no chat_uuid, creating new one"
                 )
-                chat = db_create_chat(database_url, full_message, user)
+                chat = db_create_chat(database_url, full_message, g.issuer, g.sub)
                 if chat is None:
                     return jsonify({"error": "Failed to save user chat"}), 500
 
@@ -313,12 +311,12 @@ def send_message():
                     f"Received post request with uuid {chat_uuid}, verifying access"
                 )
                 try:
-                    chat = db_get_chat(database_url, chat_uuid, user.issuer, user.sub)
+                    chat = db_get_chat(database_url, chat_uuid, g.issuer, g.sub)
                     chat_uuid = chat.id
 
                 except PermissionError:
                     logger.warning(
-                        f"User {user.sub} from {user.issuer} attempted to access chat {chat_uuid}, which is a real chat, but not theirs"
+                        f"User {g.sub} from {g.issuer} attempted to access chat {chat_uuid}, which is a real chat, but not theirs"
                     )
                     return jsonify({"error": "Record not found"}), 404
 
@@ -338,7 +336,7 @@ def send_message():
         logger.debug("Querying provider")
 
         def stream_and_store():
-            if init_new_chat and user is not None:
+            if init_new_chat and g.logged_in:
                 yield f"event: set_uuid\ndata: {json.dumps({'new_uuid': str(chat_uuid)})}\n\n"
 
             chunks: list[str] = []
