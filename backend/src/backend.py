@@ -178,7 +178,7 @@ def get_chat_history():
     for k, v in vars(ctx).items():
         logger.debug("%s: %r", k, v)
 
-    logger.debug(f"g.user_id: {g.sub}")
+    logger.debug(f"g.sub: {g.sub}")
 
     try:
         chats = db_get_all_chats(db_url=database_url, issuer=g.iss, sub=g.sub)
@@ -254,11 +254,6 @@ def delete_chat():
 @backend.route("/api/message", methods=["POST"])
 def send_message():
     data = request.get_json()
-    # TODO
-    try:
-        user = db_get_or_create_user(database_url, issuer=g.iss, sub=g.sub)
-    except KeyError:
-        return jsonify({"error": "User could not be verified"})
 
     if data is None or "messages" not in data.keys():
         return jsonify({"error": "No user prompt received"}), 400
@@ -271,6 +266,22 @@ def send_message():
                 "error": "uuid field not received in request (new chats should report uuid as the string 'None')"
             }
         ), 400
+
+    try:
+        logger.error("FLORP FLORP FLORP")
+        logger.error("FLORP FLORP FLORP")
+        logger.error("FLORP FLORP FLORP")
+        logger.error("FLORP FLORP FLORP")
+        logger.error("FLORP FLORP FLORP")
+        logger.error("FLORP FLORP FLORP")
+        logger.error("FLORP FLORP FLORP")
+
+        for k, v in g:
+            print(f"{k}: {v}")
+
+        user = db_get_or_create_user(database_url, issuer=g.iss, sub=g.sub)
+    except KeyError:
+        return jsonify({"error": "User could not be verified"})
 
     try:
         if raw_uuid == "None":
@@ -313,12 +324,12 @@ def send_message():
                     f"Received post request with uuid {chat_uuid}, verifying access"
                 )
                 try:
-                    chat = db_get_chat(database_url, chat_uuid, test_user_email)
+                    chat = db_get_chat(database_url, chat_uuid, user.issuer, user.sub)
                     chat_uuid = chat.id
 
                 except PermissionError:
                     logger.warning(
-                        f"User {test_user_email} attempted to access chat {chat_uuid}, which is a real chat, but not theirs"
+                        f"User {user.sub} from {user.issuer} attempted to access chat {chat_uuid}, which is a real chat, but not theirs"
                     )
                     return jsonify({"error": "Record not found"}), 404
 
@@ -375,11 +386,6 @@ def send_message():
                     if chat_uuid is not None:
                         # Should only happen when user is not none
                         db_set_chat_title(database_url, chat_uuid, new_chat_title)
-
-                # TODO
-                logger.warning("WARNING! WARNING! UPLOADING TO DB NOT YET SUPPORTED!")
-                logger.warning("WARNING! WARNING! UPLOADING TO DB NOT YET SUPPORTED!")
-                logger.warning("(It still just uses the test user!)")
 
         return Response(
             stream_with_context(stream_and_store()),

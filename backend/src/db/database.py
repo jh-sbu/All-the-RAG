@@ -11,7 +11,6 @@ from sqlalchemy import (
     create_engine,
     select,
 )
-from sqlalchemy.engine import create
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -26,6 +25,8 @@ from sqlalchemy.orm import (
 
 ECHO_SQL: bool = False
 
+example_issuer = "https://localhost/testing"
+example_sub = "superduper"
 
 """
 This modules assumes that issuer/sub have been verified by the calling function
@@ -42,12 +43,9 @@ class User(Base):
     # id: Mapped[int] = mapped_column(primary_key=True, init=False)
     issuer: Mapped[str] = mapped_column(String(255), primary_key=True)
     sub: Mapped[str] = mapped_column(String(255), primary_key=True)
-    email: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-        unique=True,
-        index=True,
-    )
+
+    # For allowing users to set a custom system prompt
+    user_prompt: Mapped[str] = mapped_column(Text)
 
     chats: Mapped[List["Chat"]] = relationship(
         back_populates="user",
@@ -56,7 +54,7 @@ class User(Base):
     )
 
     def __repr__(self) -> str:
-        return f"User(issuer={self.issuer!r}, sub={self.sub!r}, email={self.email!r})"
+        return f"User(issuer={self.issuer!r}, sub={self.sub!r}, user_prompt={self.user_prompt})"
 
 
 class Chat(Base):
@@ -128,7 +126,7 @@ def db_get_all_chats(db_url: str, issuer: str, sub: str) -> list[dict]:
         result = [
             {
                 "id": str(chat.id),
-                "user_email": str(chat.user.email),
+                "user_prompt": str(chat.user.user_prompt),
                 "title": str(chat.title),
                 "messages": [
                     {"id": msg.id, "role": msg.role, "contents": msg.contents}
@@ -194,14 +192,14 @@ def db_create_message(db_url: str, role: str, contents: str, chat_id: uuid.UUID)
         return new_message
 
 
-def db_get_chat(db_url: str, chat_id: uuid.UUID, user_email: str) -> Chat:
+def db_get_chat(db_url: str, chat_id: uuid.UUID, iss: str, sub: str) -> Chat:
     """Retrieve a specific chat owned by user
     Raises: NoResultFound if user or chat cannot be found"""
     engine = create_engine(db_url, echo=ECHO_SQL)
 
     with Session(engine) as session:
         user = session.execute(
-            select(User).where(User.email == user_email)
+            select(User).where(User.issuer == iss, User.sub == sub)
         ).scalar_one()
 
         chat = session.execute(select(Chat).where(Chat.id == chat_id)).scalar_one()
@@ -229,7 +227,11 @@ def db_get_or_create_user(db_url: str, issuer: str, sub: str) -> User | None:
             user = session.execute(user_stmt).scalar_one()
             return user
         except NoResultFound:
-            new_user = User(issuer=issuer, sub=sub, email="test", chats=[])
+            new_user = User(issuer=issuer, sub=sub, user_prompt="", chats=[])
+            session.add(new_user)
+            session.commit()
+
+            return new_user
 
 
 def db_create_chat(db_url: str, initial_message: str, user: User):
@@ -273,7 +275,7 @@ def db_set_chat_title(db_url: str, chat_id: uuid.UUID, chat_title: str):
         session.commit()
 
 
-def db_delete_user(db_url: str, user_email: str):
+def db_delete_user(db_url: str, issuer: str, sub: str):
     """Delete the specified user.
     Does NOT do any auth checks, that
     should be handled separately.
@@ -282,7 +284,7 @@ def db_delete_user(db_url: str, user_email: str):
 
     with Session(engine) as session:
         user = session.execute(
-            select(User).where(User.email == user_email)
+            select(User).where(User.issuer == issuer, User.sub == sub)
         ).scalar_one()
         session.delete(user)
 
@@ -321,9 +323,11 @@ def add_example_message_to_chat(db_url: str):
 
     with Session(engine) as session:
         try:
-            test_email_addr = "test_email@example.com"
             chat_id = session.execute(
-                select(Chat.id).join(User).where(User.email == test_email_addr).limit(1)
+                select(Chat.id)
+                .join(User)
+                .where(User.issuer == example_issuer, User.sub == example_sub)
+                .limit(1)
             ).scalar_one()
 
             session.add(
@@ -352,7 +356,7 @@ def add_test_user(db_url: str):
         test_user = User(
             issuer="test_idp",
             sub="123456abcd",
-            email="test_email@example.com",
+            user_prompt="This is a test user. Start every reply to this user with 'TEST ACKNOWLEDGED'",
             chats=[],
         )
 
@@ -372,9 +376,10 @@ def create_example_chat(db_url: str):
 
     with Session(engine) as session:
         try:
-            test_email_addr = "test_email@example.com"
             user_id = session.execute(
-                select(User.issuer, User.sub).where(User.email == test_email_addr)
+                select(User.issuer, User.sub).where(
+                    User.issuer == example_issuer, User.sub == example_sub
+                )
             ).all()[0]
 
             session.add(

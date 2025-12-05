@@ -1,13 +1,10 @@
-import json
-from logging import log
 import os
 from functools import wraps
 
 from dotenv import load_dotenv
 import jwt
 from jwt import PyJWKClient
-from flask import request, g, jsonify
-from requests import auth
+from flask import request, g
 
 from atr_logger import get_logger
 
