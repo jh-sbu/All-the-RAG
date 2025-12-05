@@ -97,7 +97,11 @@ const App: React.FC = () => {
         <div className="main-content">
           <div className="header">
             <h1 className="app-title">All-the-RAG</h1>
-            <ProfileMenu session={session} onLoginClick={() => setShowLoginModal(true)} />
+            <ProfileMenu
+              session={session}
+              onLoginClick={() => setShowLoginModal(true)}
+              onLogout={handleNewChat}
+            />
           </div>
           <Chatbot
             messages={messages}

@@ -6,9 +6,10 @@ import './ProfileMenu.css';
 interface ProfileMenuProps {
   session: Session | null;
   onLoginClick: () => void;
+  onLogout: () => void;
 }
 
-const ProfileMenu = ({ session, onLoginClick }: ProfileMenuProps) => {
+const ProfileMenu = ({ session, onLoginClick, onLogout }: ProfileMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -28,6 +29,7 @@ const ProfileMenu = ({ session, onLoginClick }: ProfileMenuProps) => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setIsOpen(false);
+    onLogout();
   };
 
   const handleDeleteAccount = async () => {
