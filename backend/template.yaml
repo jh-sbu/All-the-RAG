@@ -24,9 +24,6 @@ Parameters:
   CompletionProvider:
     Type: String
     Description: Name of completion provider service
-  DatabaseURL:
-    Type: String
-    Description: URL of the database to connect to
   EmbeddingModel:
     Type: String
     Description: Embedding model name
@@ -110,7 +107,7 @@ Resources:
           BUCKET_NAME: !Ref BucketName
           COMPLETION_MODEL: !Ref CompletionModel
           COMPLETION_PROVIDER: !Ref CompletionProvider
-          DATABASE_URL: !Ref DatabaseURL
+          DATABASE_URL: ""
           EMBEDDING_MODEL: !Ref EmbeddingModel
           INDEX_NAME: !Ref IndexName
           LOG_LEVEL: !Ref LogLevel
