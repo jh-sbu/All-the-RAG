@@ -299,7 +299,7 @@ def send_message():
                 logger.debug(
                     "Received post request with no chat_uuid, creating new one"
                 )
-                chat = db_create_chat(database_url, full_message, g.issuer, g.sub)
+                chat = db_create_chat(database_url, full_message, g.iss, g.sub)
                 if chat is None:
                     return jsonify({"error": "Failed to save user chat"}), 500
 
@@ -311,12 +311,12 @@ def send_message():
                     f"Received post request with uuid {chat_uuid}, verifying access"
                 )
                 try:
-                    chat = db_get_chat(database_url, chat_uuid, g.issuer, g.sub)
+                    chat = db_get_chat(database_url, chat_uuid, g.iss, g.sub)
                     chat_uuid = chat.id
 
                 except PermissionError:
                     logger.warning(
-                        f"User {g.sub} from {g.issuer} attempted to access chat {chat_uuid}, which is a real chat, but not theirs"
+                        f"User {g.sub} from {g.iss} attempted to access chat {chat_uuid}, which is a real chat, but not theirs"
                     )
                     return jsonify({"error": "Record not found"}), 404
 
