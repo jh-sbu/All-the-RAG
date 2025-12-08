@@ -24,6 +24,9 @@ Parameters:
   CompletionProvider:
     Type: String
     Description: Name of completion provider service
+  DatabaseURL:
+    Type: String
+    Description: URL of the database to connect to
   EmbeddingModel:
     Type: String
     Description: Embedding model name
@@ -33,12 +36,24 @@ Parameters:
   IndexName:
     Type: String
     Description: S3 Vectors index name
+  LogLevel:
+    Type: String
+    Description: Backend log level
   ProfileName:
     Type: String
     Description: AWS Profile name (for auth, do I need this here?)
   ProfileRegion:
     Type: String
     Description: AWS Region
+  SupabaseURL:
+    Type: String
+    Description: Supabase URL for auth
+  UseCors:
+    Type: String
+    Description: CORS toggle for compatibility with services that do/do not do this for you
+  VDB:
+    Type: String
+    Description: Vector database driver to use
 
 Globals:
   Function:
@@ -52,22 +67,6 @@ Globals:
         FLASK_ENV: production
 
 Resources:
-  # ApiGateway:
-  #   Type: AWS::Serverless::HttpApi
-  #   Properties:
-  #     StageName: !Sub ${StageName}
-  #     # EndpointConfiguration: REGIONAL
-  #     # Cors:
-  #     #   AllowMethods: "'GET,POST,OPTIONS'"
-  #     #   AllowHeaders: "'Content-Type,Authorization'"
-  #     #   AllowOrigin: "'*'"
-  #     CorsConfiguration:
-  #       AllowCredentials: false
-  #       AllowOrigins:
-  #         - !Sub ${FrontendURL}
-  #       AllowHeaders:
-  #         - "*"
-
   ATRStreamFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -111,13 +110,16 @@ Resources:
           BUCKET_NAME: !Ref BucketName
           COMPLETION_MODEL: !Ref CompletionModel
           COMPLETION_PROVIDER: !Ref CompletionProvider
+          DATABASE_URL: !Ref DatabaseURL
           EMBEDDING_MODEL: !Ref EmbeddingModel
           INDEX_NAME: !Ref IndexName
-          LOG_LEVEL: "info"
+          LOG_LEVEL: !Ref LogLevel
           PROFILE_NAME: !Ref ProfileName
           PROFILE_REGION: !Ref ProfileRegion
           SECRET_KEY: ""
-          VDB: "Amazon S3 Vector"
+          SUPABASE_URL: !Ref SupabaseURL
+          USE_CORS: !Ref UseCors
+          VDB: !Ref VDB
 
   ATRStreamFunctionUrlInvokePermission:
     Type: AWS::Lambda::Permission
@@ -262,21 +264,3 @@ Outputs:
   ATRStreamFunctionUrl:
     Value: !GetAtt ATRStreamFunctionUrl.FunctionUrl
     Description: Public Function url with response streaming enabled
-  # ApiUrl:
-  #   Description: Base URL for the API Gateway stage.
-  #   Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}"
-  # RegisterUrl:
-  #   Description: POST /register endpoint
-  #   Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/register"
-  # LoginUrl:
-  #   Description: POST /login endpoint
-  #   Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/login"
-  # PastChatsUrl:
-  #   Description: GET /past_chats endpoint
-  #   Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/past_chats"
-  # ChatHistroyUrl:
-  #   Description: GET /chat_history endpoint
-  #   Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/chat_history"
-  # SendMessageUrl:
-  #   Description: POST /send_message endpoint
-  #   Value: !Sub "https://${ATRRedirect}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/send_message"

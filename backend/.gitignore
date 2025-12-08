@@ -5,3 +5,4 @@ sandbox/
 .aws-sam/
 samconfig.toml
 env.json
+.env.deploy
