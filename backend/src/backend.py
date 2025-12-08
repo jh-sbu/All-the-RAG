@@ -1,37 +1,34 @@
 import json
+import logging
+import os
 import uuid
-from flask import Flask, Response, jsonify, request, stream_with_context, g
-from flask_cors import CORS
 
 import jwt
-
-from dotenv import load_dotenv
-import os
-
 import requests
-from sqlalchemy.exc import IntegrityError, NoResultFound
-
 from atr_logger import get_logger, set_log_level
-from auth import require_supabase_user
+from auth import auth_supabase_user
 from db.database import (
     add_example_message_to_chat,
     add_test_user,
     create_example_chat,
     db_create_chat,
+    db_create_message,
     db_delete_chat,
     db_get_all_chats,
     db_get_all_messages,
-    db_get_or_create_user,
     db_get_chat,
-    db_create_message,
+    db_get_or_create_user,
     db_set_chat_title,
 )
+from dotenv import load_dotenv
+from flask import Flask, Response, g, jsonify, request, stream_with_context
+from flask_cors import CORS
+from models.auth_context import AuthContext
+from providers.llama_server import Llama
+from providers.openrouter import OpenRouter
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from vdb.amazons3vector import AmazonS3Vector
 from vdb.faiss import FaissIndex
-from providers.openrouter import OpenRouter
-from providers.llama_server import Llama
-import logging
-
 
 backend = Flask(__name__)
 
@@ -151,10 +148,10 @@ def auth_callback():
 
         tokens = token_response.json()
 
-        user_info = jwt.decode(tokens["id_token"], options={"verify_signature": False})
+        jwt.decode(tokens["id_token"], options={"verify_signature": False})
 
-    if False:
-        return jsonify({"error": "Could not read json from request"}), 400
+    # if False:
+    #     return jsonify({"error": "Could not read json from request"}), 400
 
     return jsonify({"error": "Not yet implemented"}), 405
 
@@ -167,21 +164,25 @@ def delete_account():
 
 
 @backend.route("/api/chat", methods=["GET"])
-@require_supabase_user
+@auth_supabase_user
 def get_chat_history():
-    logger.warning("WARNING! WARNING! Test user account enabled!")
+    auth: AuthContext = g.auth
+    # logger.warning("WARNING! WARNING! Test user account enabled!")
 
-    logger.debug(f"g: {g}")
+    # logger.debug(f"g: {g}")
 
-    ctx = g._get_current_object()
+    # ctx = g._get_current_object()
 
-    for k, v in vars(ctx).items():
-        logger.debug("%s: %r", k, v)
-
-    logger.debug(f"g.sub: {g.sub}")
+    # for k, v in vars(ctx).items():
+    # logger.debug("%s: %r", k, v)
 
     try:
-        chats = db_get_all_chats(db_url=database_url, issuer=g.iss, sub=g.sub)
+        if auth.logged_in:
+            chats = db_get_all_chats(
+                db_url=database_url, issuer=auth.claims.iss, sub=auth.claims.sub
+            )
+        else:
+            chats = []
 
         return jsonify({"chats": chats})
 
@@ -190,39 +191,49 @@ def get_chat_history():
 
 
 @backend.route("/api/chat/<uuid:chat_id>", methods=["GET"])
-@require_supabase_user
+@auth_supabase_user
 def get_chat_messages(chat_id):
-    logger.warning("WARNING! WARNING! Test user account enabled!")
+    auth: AuthContext = g.auth
 
-    try:
-        messages = db_get_all_messages(
-            db_url=database_url, chat_id=chat_id, issuer=g.iss, sub=g.sub
-        )
+    if auth.logged_in:
+        try:
+            messages = db_get_all_messages(
+                db_url=database_url,
+                chat_id=chat_id,
+                issuer=auth.claims.iss,
+                sub=auth.claims.sub,
+            )
 
-        for message in messages:
-            print(f"Message: {message}")
+            for message in messages:
+                print(f"Message: {message}")
 
-        return jsonify({"messages": messages})
+            return jsonify({"messages": messages})
 
-    except PermissionError:
-        logger.info(
-            f"User {g.sub} from {g.iss} attempted to access chat {chat_id} but is NOT the owner of that chat"
-        )
-        # Don't tell them they found one though
-        return jsonify({"error": "Could not locate the specified record"}), 404
-    except NoResultFound:
-        return jsonify({"error": "Could not locate the specified record"}), 404
+        except PermissionError:
+            logger.info(
+                f"User {auth.claims.sub} from {auth.claims.iss} attempted to access chat {chat_id} but is NOT the owner of that chat"
+            )
+            # Don't tell them they found one though
+            return jsonify({"error": "Could not locate the specified record"}), 404
+        except NoResultFound:
+            return jsonify({"error": "Could not locate the specified record"}), 404
+
+    return jsonify({"error": "Only logged in users can retrieve stored chats"}), 404
 
 
 @backend.route("/api/chat", methods=["DELETE"])
-@require_supabase_user
+@auth_supabase_user
 def delete_chat():
+    auth: AuthContext = g.auth
     chat_id = request.args.get("chat_id")
 
-    if "sub" not in g.keys or "iss" not in g.keys:
+    # if "sub" not in g.keys or "iss" not in g.keys:
+    if not auth.logged_in:
         return jsonify({"error": "User could not be verified"}), 401
 
-    logger.info(f"User {g.sub} from {g.iss} attempting to delete chat {chat_id}")
+    logger.info(
+        f"User {auth.claims.sub} from {auth.claims.iss} attempting to delete chat {chat_id}"
+    )
 
     if not chat_id:
         return jsonify({"error": "No chat ID specified"}), 400
@@ -233,14 +244,16 @@ def delete_chat():
         return jsonify({"error": "Could not parse chat ID"}), 400
 
     try:
-        db_delete_chat(database_url, chat_id=chat_id, issuer=g.iss, sub=g.sub)
+        db_delete_chat(
+            database_url, chat_id=chat_id, issuer=auth.claims.iss, sub=auth.claims.sub
+        )
     except IntegrityError:
         return jsonify({"error": "Error updating database"}), 500
     except NoResultFound:
         return jsonify({"error": "Could not locate the specified record"}), 404
     except PermissionError:
         logger.info(
-            f"User {g.sub} from {g.iss} attempted to delete chat {chat_id} but is NOT the owner of that chat"
+            f"User {auth.claims.sub} from {auth.claims.iss} attempted to delete chat {chat_id} but is NOT the owner of that chat"
         )
         # Don't want to allow enumerating existing chats so return the same as though
         # the record wasn't found, but we do want to log this seperately to spot
@@ -251,9 +264,10 @@ def delete_chat():
 
 
 @backend.route("/api/message", methods=["POST"])
-@require_supabase_user
+@auth_supabase_user
 def send_message():
     data = request.get_json()
+    auth: AuthContext = g.auth
 
     if data is None or "messages" not in data.keys():
         return jsonify({"error": "No user prompt received"}), 400
@@ -278,8 +292,8 @@ def send_message():
     except ValueError:
         return jsonify({"error": "Could not parse the uuid field correctly"}), 400
 
-    if g.logged_in:
-        _ = db_get_or_create_user(database_url, issuer=g.iss, sub=g.sub)
+    if auth.logged_in:
+        db_get_or_create_user(database_url, issuer=auth.claims.iss, sub=auth.claims.sub)
 
     messages = data.get("messages")
     if not isinstance(messages, list) or len(messages) < 1:
@@ -293,13 +307,18 @@ def send_message():
     logger.debug(f"Latest message: {latest_message}")
 
     try:
-        if g.logged_in:
+        if auth.logged_in:
             # New chat
             if chat_uuid is None:
                 logger.debug(
                     "Received post request with no chat_uuid, creating new one"
                 )
-                chat = db_create_chat(database_url, full_message, g.iss, g.sub)
+                chat = db_create_chat(
+                    database_url,
+                    full_message,
+                    auth.claims.iss,
+                    auth.claims.sub,
+                )
                 if chat is None:
                     return jsonify({"error": "Failed to save user chat"}), 500
 
@@ -311,12 +330,17 @@ def send_message():
                     f"Received post request with uuid {chat_uuid}, verifying access"
                 )
                 try:
-                    chat = db_get_chat(database_url, chat_uuid, g.iss, g.sub)
+                    chat = db_get_chat(
+                        database_url,
+                        chat_uuid,
+                        auth.claims.iss,
+                        auth.claims.sub,
+                    )
                     chat_uuid = chat.id
 
                 except PermissionError:
                     logger.warning(
-                        f"User {g.sub} from {g.iss} attempted to access chat {chat_uuid}, which is a real chat, but not theirs"
+                        f"User {auth.claims.sub} from {auth.claims.iss} attempted to access chat {chat_uuid}, which is a real chat, but not theirs"
                     )
                     return jsonify({"error": "Record not found"}), 404
 
@@ -336,7 +360,7 @@ def send_message():
         logger.debug("Querying provider")
 
         def stream_and_store():
-            if init_new_chat and g.logged_in:
+            if init_new_chat and auth.logged_in:
                 yield f"event: set_uuid\ndata: {json.dumps({'new_uuid': str(chat_uuid)})}\n\n"
 
             chunks: list[str] = []

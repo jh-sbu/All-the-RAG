@@ -7,6 +7,7 @@ from jwt import PyJWKClient
 from flask import request, g
 
 from atr_logger import get_logger
+from models.auth_context import AuthContext, Claims
 
 load_dotenv()
 
@@ -39,16 +40,14 @@ def verify_supabase_jwt(token: str) -> dict[str, str]:
     )
 
 
-def require_supabase_user(fn):
+def auth_supabase_user(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         auth_header = request.headers.get("Authorization", "")
 
         if not auth_header.startswith("Bearer "):
             logger.info("No bearer token found")
-            g.logged_in = False
-            g.iss = None
-            g.sub = None
+            g.auth = AuthContext(_protected_claims=None)
 
         else:
             token = auth_header.split(" ", 1)[1].strip()
@@ -56,12 +55,18 @@ def require_supabase_user(fn):
             try:
                 claims = verify_supabase_jwt(token)
                 # Make user info available to view functions
-                g.jwt_claims = claims
-                g.iss = claims.get("iss", None)
-                g.sub = claims.get("sub", None)
-                g.email = claims.get("email")
+                iss = claims.get("iss", None)
+                sub = claims.get("sub", None)
 
-                g.logged_in = g.iss is not None and g.sub is not None
+                if iss is not None and sub is not None:
+                    g.auth = AuthContext(
+                        _protected_claims=Claims(
+                            iss=iss,
+                            sub=sub,
+                        )
+                    )
+                else:
+                    g.auth = AuthContext(_protected_claims=None)
 
             except Exception as e:
                 logger.error(f"Failed to verify Supabase JWT: {e}")
