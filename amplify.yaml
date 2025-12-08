@@ -5,7 +5,6 @@ applications:
       phases:
         preBuild:
           commands:
-            # - npm install -g pnpm
             - corepack enable
             - pnpm install --frozen-lockfile
         build:
