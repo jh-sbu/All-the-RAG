@@ -5,6 +5,7 @@ import './Chatbot.css';
 import { UUID } from '../Models/ChatSession';
 import { Session } from '@supabase/supabase-js';
 import { apiFetch } from '../lib/api';
+import ChatMessage from './ChatMessage';
 
 interface ChatbotProps {
   messages: IMessage[];
@@ -183,9 +184,7 @@ function Chatbot({ messages, setMessages, chatId, setChatId, onUpdateSources, on
       )}
       <div className="chat-window">
         {messages.map((msg, index) => (
-          <div key={index} className={`message ${msg.sender}`}>
-            <strong>{msg.sender}:</strong> {msg.text}
-          </div>
+          <ChatMessage key={index} message={msg} />
         ))}
       </div>
       <div className="chat-input">

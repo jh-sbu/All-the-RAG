@@ -74,20 +74,6 @@
   max-height: 70vh;
 }
 
-.message {
-  margin: 5px 0;
-  padding: 5px;
-  white-space: pre-wrap;
-}
-
-.message.assistant {
-  text-align: left;
-}
-
-.message.user {
-  text-align: right;
-}
-
 .chat-input {
   display: flex;
   gap: 10px;
