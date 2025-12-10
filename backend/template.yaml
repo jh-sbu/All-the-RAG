@@ -92,8 +92,13 @@ Resources:
           AllowCredentials: false
           AllowOrigins:
             - !Sub ${FrontendURL}
-          AllowHeaders: ["*"]
-          AllowMethods: ["*"]
+          AllowHeaders:
+            - Authorization
+            - Content-Type
+          AllowMethods:
+            - GET
+            - POST
+            - DELETE
       Environment:
         Variables:
           AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap
