@@ -167,14 +167,16 @@ function Chatbot({ messages, setMessages, chatId, setChatId, onUpdateSources, on
     <div className="chatbot">
       <div className="header">
         <h2>Chat</h2>
-        <button
-          className={`health-check-btn ${healthStatus}`}
-          onClick={checkHealth}
-        >
-          {healthStatus === 'idle' && 'Test'}
-          {healthStatus === 'success' && '✓ Success'}
-          {healthStatus === 'error' && '✗ Error'}
-        </button>
+        {import.meta.env.DEV && (
+          <button
+            className={`health-check-btn ${healthStatus}`}
+            onClick={checkHealth}
+          >
+            {healthStatus === 'idle' && 'Test'}
+            {healthStatus === 'success' && '✓ Success'}
+            {healthStatus === 'error' && '✗ Error'}
+          </button>
+        )}
       </div>
       {!session && messages.length === 0 && (
         <div className="auth-notice">
