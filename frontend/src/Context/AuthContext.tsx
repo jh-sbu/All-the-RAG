@@ -125,7 +125,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async () => {
     if (!clientId || !authority || !redirectUri) {
-      console.error('OAuth2 configuration is missing. Please set environment variables.');
+      if (import.meta.env.DEV) {
+        console.error('OAuth2 configuration is missing. Please set environment variables.');
+      }
       return;
     }
 

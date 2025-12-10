@@ -74,7 +74,6 @@ const App: React.FC = () => {
   };
 
   const handlePreviousChat = async (chatId: UUID) => {
-    console.debug(`User clicked on a previous chat: ${chatId}`);
     try {
       const response = await apiFetch(`/api/chat/${chatId}`);
       const data = await response.json();
