@@ -9,6 +9,11 @@ import './SourceCard.css';
 // }
 
 function SourceCard({ number, title, summary, url }: ISource) {
+  // Data sources don't support this quite yet but I don't want to
+  // change the prop interface
+  void title;
+  void summary;
+
   return (
     <div className="source-card">
       <span className="source-number">Source {number}</span>
